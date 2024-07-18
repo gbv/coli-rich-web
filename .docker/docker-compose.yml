@@ -1,0 +1,13 @@
+services:
+  coli-rich-web:
+    # image: ghcr.io/gbv/coli-rich-web
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile
+    volumes:
+      - ./data:/usr/src/app/dist
+    environment:
+      - BASE=/
+    ports:
+      - 3454:80
+    restart: unless-stopped

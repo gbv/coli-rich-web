@@ -1,0 +1,39 @@
+{
+  "name": "coli-rich-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3454",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint --ignore-path .gitignore --ext .js,.vue .",
+    "fix": "npm run lint -- --fix",
+    "lint-staged": "lint-staged"
+  },
+  "lint-staged": {
+    "**/*.{js,vue}": [
+      "eslint --fix"
+    ]
+  },
+  "pre-commit": [
+    "lint-staged"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cocoda-sdk": "^3.4.9",
+    "vue": "^3.4.31"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.0",
+    "eslint-config-gbv": "^1.1.0",
+    "eslint-plugin-vue": "^9.27.0",
+    "lint-staged": "^15.2.7",
+    "pre-commit": "^1.2.2",
+    "vite": "^5.3.4"
+  }
+}
