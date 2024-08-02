@@ -42,16 +42,22 @@ const { version, name } = config
       </div>
     </main>
     <footer class="footer">
-      <p><b>{{ name }}</b> (Version {{ version }}) ist Teil des <a href="https://coli-conc.gbv.de/">coli-conc Projekts</a>. Der Quellcode und die technische Dokumentation werden über <a href="https://github.com/gbv/coli-rich-web" target="_blank">GitHub</a> bereitgestellt. Dieses Tool ist noch in der Entwicklungsphase.</p>
       <p>
-        <b>coli-conc</b> ist ein Projekt der <a href="https://www.gbv.de/" target="_blank">Verbundzentrale des GBV (VZG)</a>. Es wurde gefördert von der Deutschen Forschungsgemeinschaft (DFG) in
-      <a
-        href="https://gepris.dfg.de/gepris/projekt/276843344"
-        target="_blank">2015-2019</a>
-      und
-      <a
-        href="https://gepris.dfg.de/gepris/projekt/455051200"
-        target="_blank">2021-2023</a>.
+        <b>{{ name }}</b> (Version {{ version }}) ist Teil des <a href="https://coli-conc.gbv.de/">coli-conc Projekts</a>. Der Quellcode und die technische Dokumentation werden über <a
+          href="https://github.com/gbv/coli-rich-web"
+          target="_blank">GitHub</a> bereitgestellt. Dieses Tool ist noch in der Entwicklungsphase.
+      </p>
+      <p>
+        <b>coli-conc</b> ist ein Projekt der <a
+          href="https://www.gbv.de/"
+          target="_blank">Verbundzentrale des GBV (VZG)</a>. Es wurde gefördert von der Deutschen Forschungsgemeinschaft (DFG) in
+        <a
+          href="https://gepris.dfg.de/gepris/projekt/276843344"
+          target="_blank">2015-2019</a>
+        und
+        <a
+          href="https://gepris.dfg.de/gepris/projekt/455051200"
+          target="_blank">2021-2023</a>.
       </p>
       <p>
         <a

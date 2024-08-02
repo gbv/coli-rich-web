@@ -27,6 +27,8 @@
     "vue": "^3.4.31"
   },
   "devDependencies": {
+    "@babel/eslint-parser": "^7.25.1",
+    "@babel/plugin-syntax-import-assertions": "^7.24.7",
     "@vitejs/plugin-vue": "^5.0.5",
     "dotenv": "^16.4.5",
     "eslint": "^8.57.0",

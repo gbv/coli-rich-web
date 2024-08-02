@@ -9,8 +9,13 @@ module.exports = {
     "gbv",
     "gbv/vue/3",
   ],
+  parser: "@babel/eslint-parser",
   parserOptions: {
-    sourceType: "module",
-    ecmaVersion: 2020,
+    requireConfigFile: false,
+    babelOptions: {
+      plugins: [
+        "@babel/plugin-syntax-import-assertions",
+      ],
+    },
   },
 }
