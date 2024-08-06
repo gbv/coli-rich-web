@@ -1,9 +1,19 @@
 <script setup>
 import { ref, reactive, watch } from "vue"
 import * as jskos from "jskos-tools"
+import { cdk } from "cocoda-sdk"
 import config from "./config.js"
 
 const { version, name } = config
+
+const bartocRegistry = cdk.initializeRegistry({
+  provider: "ConceptApi",
+  api: "https://bartoc.org/api/",
+})
+const concordanceRegistry = cdk.initializeRegistry({
+  provider: "MappingsApi",
+  api: "https://coli-conc.gbv.de/api/",
+})
 
 const subjectsApi = "http://localhost:3141"
 const ppninput = ref("")
@@ -15,12 +25,22 @@ const state = reactive({
   error: false,
   titleName: "",
   subjects: [],
+  mappings: [],
 })
 
 watch(() => state.ppn, async (ppn) => {
-  console.log(`Load ${ppn}`)
+  console.log(`Load PPN ${ppn}`)
+  console.time(`Load PPN ${ppn}`)
+
   state.loading = true
   state.error = false
+
+  state.titleName = ""
+  state.subjects = []
+  state.mappings = []
+
+  // Load title data from CSL2 API
+  console.time("Load title data")
   try {
     const cslResult = await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json()
     state.titleName = cslResult[1][0]
@@ -34,13 +54,65 @@ watch(() => state.ppn, async (ppn) => {
     console.error(error)
     state.error = true
   }
+  console.timeEnd("Load title data")
+
+  // Load concept data for subjects
+  console.time("Load concept data for subjects")
+  try {
+    await Promise.all(state.subjects.map(async ({ scheme, subjects }) => {
+      if (!scheme.API?.length || !scheme._registry) {
+        return
+      }
+      const concepts = await scheme._registry.getConcepts({ concepts: subjects.map(subject => ({ uri: subject.uri })) })
+      concepts.forEach(concept => {
+        const subject = subjects.find(s => jskos.compare(s, concept))
+        if (subject) {
+          subject.prefLabel = concept.prefLabel
+        }
+      })
+    }))
+  } catch (error) {
+    console.error("Error loading concept data", error)
+    // Error is not critical
+  }
+  console.timeEnd("Load concept data for subjects")
+
+  // Load mappings for subjects
+  console.time("Load mappings")
+  // TODO
+  console.timeEnd("Load mappings")
+
+  // Load concept data for mappings
+  console.time("Load concept data for mappings")
+  // TODO
+  console.timeEnd("Load concept data for mappings")
+  
   state.loading = false
+  console.timeEnd(`Load PPN ${ppn}`)
 })
 
-fetch(`${subjectsApi}/voc`).then(res => res.json()).then(result => {
-  state.schemes = result
+;(async () => {
+  // Initialize registries 
+  bartocRegistry.init()
+  concordanceRegistry.init()
+  // Load supported schemes from subjects-api
+  const schemes = await (await fetch(`${subjectsApi}/voc`)).json()
+  const schemesFromBARTOC = await bartocRegistry.getSchemes({
+    params: {
+      uri: schemes.map(scheme => scheme.uri).join("|"),
+    },
+  })
+  // Merge properties from BARTOC schemes with subject-api schemes
+  schemesFromBARTOC.forEach(scheme => Object.getOwnPropertyNames(scheme).forEach(prop => {
+    const otherScheme = schemes.find(s => jskos.compare(s, scheme))
+    if (!otherScheme || otherScheme[prop]) {
+      return
+    }
+    otherScheme[prop] = scheme[prop]
+  }))
+  state.schemes = schemes
   state.loading = false
-})
+})()
 </script>
 
 <template>
@@ -111,7 +183,7 @@ fetch(`${subjectsApi}/voc`).then(res => res.json()).then(result => {
                 <p
                   v-for="{ scheme, subjects } in state.subjects"
                   :key="scheme.uri">
-                  <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => jskos.notation(subject)).join(", ") }}
+                  <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => `${jskos.notation(subject)} ${jskos.prefLabel(subject, { fallbackToUri: false })}`).join(", ") }}
                 </p>
               </td>
             </tr>
