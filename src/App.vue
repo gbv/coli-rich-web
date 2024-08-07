@@ -27,6 +27,7 @@ const state = reactive({
   titleName: "",
   subjects: [],
   mappings: [],
+  suggestions: [],
 })
 
 const initPromise = (async () => {
@@ -89,6 +90,7 @@ watch(() => state.ppn, async (ppn) => {
   state.titleName = ""
   state.subjects = []
   state.mappings = []
+  state.suggestions = []
   updateUrl({ ppn })
 
   // Load title data from CSL2 API
@@ -131,7 +133,66 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load mappings for subjects
   console.time("Load mappings")
-  // TODO
+  const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
+  const mappings = await concordanceRegistry.getMappings({
+    from: subjects.map(s => s.uri).join("|"),
+    toScheme: state.schemes.map(s => s.uri).join("|"),
+    direction: "both",
+    cardinality: "1-to-1",
+  })
+  // TODO: This needs to be fixed in the data!
+  const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
+  if (mappingsWithoutType.length) {
+    console.warn("The following mappings without a mapping type were loaded and need to be fixed:", mappingsWithoutType.map(m => m.uri))
+  }
+  state.mappings = mappings
+  const suggestions = []
+  for (const mapping of mappings) {
+    const targetSide = ["from", "to"].find(side => jskos.conceptsOfMapping(mapping, side).filter(concept => jskos.isContainedIn(concept, subjects)).length === 0)
+    let target = jskos.conceptsOfMapping(mapping, targetSide)[0]
+    if (!target) {
+      continue
+    }
+    target = {
+      ...target,
+      inScheme: [mapping[`${targetSide}Scheme`]],
+    }
+    const existingSuggestion = suggestions.find(s => jskos.compare(s.target, target))
+    if (existingSuggestion) {
+      existingSuggestion.mappings.push(mapping)
+    } else {
+      suggestions.push({
+        target,
+        mappings: [mapping],
+      })
+    }
+  }
+  // TODO: This is more complicated as mapping direction needs to be accounted for
+  const mappingTypePriority = [
+    "http://www.w3.org/2004/02/skos/core#exactMatch",
+    "http://www.w3.org/2004/02/skos/core#closeMatch",
+    "http://www.w3.org/2004/02/skos/core#broadMatch",
+    "http://www.w3.org/2004/02/skos/core#narrowMatch",
+    "http://www.w3.org/2004/02/skos/core#mappingRelation",
+    "http://www.w3.org/2004/02/skos/core#relatedMatch",
+  ]
+  suggestions.sort((a, b) => {
+    const aPriority = Math.min(...a.mappings.map(mapping => {
+      const index = mappingTypePriority.indexOf(mapping.type?.[0])
+      return index === -1 ? 9 : index
+    }), 10)
+    const bPriority = Math.min(...b.mappings.map(mapping => {
+      const index = mappingTypePriority.indexOf(mapping.type?.[0])
+      return index === -1 ? 9 : index
+    }), 10)
+    if (aPriority === bPriority) {
+      // Fallback to number of mappings
+      return b.mappings.length - a.mappings.length
+    }
+    return aPriority - bPriority
+  })
+  state.suggestions = suggestions
+  console.log(suggestions)
   console.timeEnd("Load mappings")
 
   // Load concept data for mappings
@@ -227,6 +288,43 @@ const examples = [
                   :key="scheme.uri">
                   <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => `${jskos.notation(subject)} ${jskos.prefLabel(subject, { fallbackToUri: false })}`).join(", ") }}
                 </p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <h2>Mögliche Anreicherungen</h2>
+        <table v-if="!state.loading && state.ppn">
+          <thead>
+            <tr>
+              <th>Vokabular</th>
+              <th>Notation</th>
+              <th>Quellen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              v-for="{ target, mappings } in state.suggestions"
+              :key="target.uri">
+              <td>{{ jskos.notation(target.inScheme[0]) }}</td>
+              <td>{{ jskos.notation(target) }}</td>
+              <td>
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                  <li
+                    v-for="mapping in mappings"
+                    :key="mapping.uri">
+                    {{ jskos.notation(mapping.fromScheme) }}:
+                    {{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}
+                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
+                    {{ jskos.notation(jskos.mappingTypeByUri(mapping.type?.[0] || "http://www.w3.org/2004/02/skos/core#mappingRelation")) }}
+                    {{ jskos.notation(mapping.toScheme) }}:
+                    {{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}
+                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "to")[0], { fallbackToUri: false }) }}
+                    ({{ jskos.prefLabel(mapping.creator?.[0]) || "?" }}, {{ mapping.created?.slice(0, 4) || "?" }})
+                    <a
+                      :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
+                      target="_blank">Details</a>
+                  </li>
+                </ul>
               </td>
             </tr>
           </tbody>
