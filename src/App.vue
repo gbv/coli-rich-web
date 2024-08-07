@@ -212,7 +212,27 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load concept data for mappings
   console.time("Load concept data for mappings")
-  // TODO
+  const suggestionsGroupedByScheme = state.schemes.map(scheme => ({ scheme, concepts: suggestions.filter(({ target }) => jskos.compare(target.inScheme[0], scheme)).map(({ target }) => target) })).filter(group => group.concepts.length)
+  // TODO: Fix code repetition from above
+  await Promise.all(suggestionsGroupedByScheme.map(async ({ scheme, concepts: conceptsToLoad }) => {
+    console.log(scheme, conceptsToLoad)
+    if (!scheme.API?.length || !scheme._registry) {
+      return
+    }
+    let concepts
+    try {
+      concepts = await scheme._registry.getConcepts({ concepts: conceptsToLoad.map(subject => ({ uri: subject.uri })) })
+    } catch (error) {
+      console.warn(`Could not load concept data for ${jskos.notation(scheme)} concepts`, error)
+      return []
+    }
+    concepts.forEach(loadedConcept => {
+      const concept = conceptsToLoad.find(s => jskos.compare(s, loadedConcept))
+      if (concept) {
+        concept.prefLabel = loadedConcept.prefLabel
+      }
+    })
+  }))
   console.timeEnd("Load concept data for mappings")
   
   state.loading = false
@@ -324,7 +344,7 @@ const examples = [
               v-for="{ target, mappings } in state.suggestions"
               :key="target.uri">
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
-              <td>{{ jskos.notation(target) }}</td>
+              <td>{{ jskos.notation(target) }} {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
               <td>
                 <ul class="plainList">
                   <li
