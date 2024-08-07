@@ -114,6 +114,11 @@ watch(() => state.ppn, async (ppn) => {
   state.schemes = schemes
   state.loading = false
 })()
+
+const examples = [
+  "389598534",
+  "1830228498",
+]
 </script>
 
 <template>
@@ -162,11 +167,19 @@ watch(() => state.ppn, async (ppn) => {
             @click="state.ppn = ppninput">
             Laden
           </button>
-          <a
-            href=""
-            @click.prevent="ppninput = '389598534'; state.ppn = '389598534'">
-            Ex: 389598534
-          </a>
+          Beispiele:
+          <template
+            v-for="(ppn, index) in examples"
+            :key="ppn">
+            <a
+              href=""
+              @click.prevent="ppninput = ppn; state.ppn = ppn">
+              {{ ppn }}
+            </a>
+            <template v-if="index < examples.length - 1">
+              ·
+            </template>
+          </template>
         </p>
         <table v-if="!state.loading && state.ppn">
           <tbody>
