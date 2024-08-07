@@ -284,11 +284,13 @@ const examples = [
             <tr>
               <th>Sacherschließung</th>
               <td>
-                <p
-                  v-for="{ scheme, subjects } in state.subjects"
-                  :key="scheme.uri">
-                  <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => `${jskos.notation(subject)} ${jskos.prefLabel(subject, { fallbackToUri: false })}`).join(", ") }}
-                </p>
+                <ul class="plainList">
+                  <li
+                    v-for="{ scheme, subjects } in state.subjects"
+                    :key="scheme.uri">
+                    <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => `${jskos.notation(subject)} ${jskos.prefLabel(subject, { fallbackToUri: false })}`).join(", ") }}
+                  </li>
+                </ul>
               </td>
             </tr>
           </tbody>
@@ -309,7 +311,7 @@ const examples = [
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
               <td>{{ jskos.notation(target) }}</td>
               <td>
-                <ul style="list-style: none; margin: 0; padding: 0;">
+                <ul class="plainList">
                   <li
                     v-for="mapping in mappings"
                     :key="mapping.uri">
@@ -368,5 +370,10 @@ header > h1 {
   float: left;
   padding: 18px 0 0 20px;
   font-size: 24px;
+}
+.plainList {
+  list-style: none !important;
+  margin: 0; 
+  padding: 0;
 }
 </style>
