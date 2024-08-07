@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch } from "vue"
+import { ref, reactive, watch, onMounted } from "vue"
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
 addAllProviders()
@@ -29,7 +29,57 @@ const state = reactive({
   mappings: [],
 })
 
+const initPromise = (async () => {
+  console.time("Init")
+  // Initialize registries 
+  bartocRegistry.init()
+  concordanceRegistry.init()
+  // Load supported schemes from subjects-api
+  const schemes = await (await fetch(`${subjectsApi}/voc`)).json()
+  const schemesFromBARTOC = await bartocRegistry.getSchemes({
+    params: {
+      uri: schemes.map(scheme => scheme.uri).join("|"),
+    },
+  })
+  // Merge properties from BARTOC schemes with subject-api schemes
+  schemesFromBARTOC.forEach(scheme => Object.getOwnPropertyNames(scheme).forEach(prop => {
+    const otherScheme = schemes.find(s => jskos.compare(s, scheme))
+    if (!otherScheme || otherScheme[prop]) {
+      return
+    }
+    otherScheme[prop] = scheme[prop]
+  }))
+  state.schemes = schemes
+  state.loading = false
+  console.timeEnd("Init")
+})()
+
+onMounted(() => {
+  // Get PPN parameter from URL
+  const urlParams = new URLSearchParams(window.location.search)
+  state.ppn = urlParams.get("ppn") || null
+})
+
+function updateUrl({ ppn } = {}) {
+  const hash = window.location.hash
+  const urlParams = new URLSearchParams(window.location.search)
+  if (ppn) {
+    urlParams.set("ppn", ppn)
+  } else {
+    urlParams.delete("ppn")
+  }
+  // Build new URL
+  let url = `${window.location.href.replace(hash, "").replace(window.location.search, "")}`
+  if (urlParams.toString()) {
+    url += `?${urlParams.toString()}`
+  }
+  // Note that hash/fragment needs to be at the end of the URL, otherwise the search params will be considered part of the hash!
+  url += hash
+  window.history.replaceState({}, "", url)
+}
+
 watch(() => state.ppn, async (ppn) => {
+  await initPromise
   console.log(`Load PPN ${ppn}`)
   console.time(`Load PPN ${ppn}`)
 
@@ -39,6 +89,7 @@ watch(() => state.ppn, async (ppn) => {
   state.titleName = ""
   state.subjects = []
   state.mappings = []
+  updateUrl({ ppn })
 
   // Load title data from CSL2 API
   console.time("Load title data")
@@ -91,29 +142,6 @@ watch(() => state.ppn, async (ppn) => {
   state.loading = false
   console.timeEnd(`Load PPN ${ppn}`)
 })
-
-;(async () => {
-  // Initialize registries 
-  bartocRegistry.init()
-  concordanceRegistry.init()
-  // Load supported schemes from subjects-api
-  const schemes = await (await fetch(`${subjectsApi}/voc`)).json()
-  const schemesFromBARTOC = await bartocRegistry.getSchemes({
-    params: {
-      uri: schemes.map(scheme => scheme.uri).join("|"),
-    },
-  })
-  // Merge properties from BARTOC schemes with subject-api schemes
-  schemesFromBARTOC.forEach(scheme => Object.getOwnPropertyNames(scheme).forEach(prop => {
-    const otherScheme = schemes.find(s => jskos.compare(s, scheme))
-    if (!otherScheme || otherScheme[prop]) {
-      return
-    }
-    otherScheme[prop] = scheme[prop]
-  }))
-  state.schemes = schemes
-  state.loading = false
-})()
 
 const examples = [
   "389598534",
