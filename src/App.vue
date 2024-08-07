@@ -1,7 +1,8 @@
 <script setup>
 import { ref, reactive, watch } from "vue"
 import * as jskos from "jskos-tools"
-import { cdk } from "cocoda-sdk"
+import { cdk, addAllProviders } from "cocoda-sdk"
+addAllProviders()
 import config from "./config.js"
 
 const { version, name } = config
