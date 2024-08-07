@@ -262,7 +262,7 @@ const examples = [
             :key="ppn">
             <a
               href=""
-              @click.prevent="ppninput = ppn; state.ppn = ppn">
+              @click.prevent="state.ppn = ppn">
               {{ ppn }}
             </a>
             <template v-if="index < examples.length - 1">
@@ -270,6 +270,7 @@ const examples = [
             </template>
           </template>
         </p>
+        <h2>Titeldaten</h2>
         <table v-if="!state.loading && state.ppn">
           <tbody>
             <tr>
