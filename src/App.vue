@@ -145,6 +145,21 @@ watch(() => state.ppn, async (ppn) => {
   if (mappingsWithoutType.length) {
     console.warn("The following mappings without a mapping type were loaded and need to be fixed:", mappingsWithoutType.map(m => m.uri))
   }
+  // Supplement mappings with scheme data (including determining notations)
+  mappings.forEach(mapping => {
+    ["from", "to"].forEach(side => {
+      mapping[`${side}Scheme`] = state.schemes.find(scheme => jskos.compare(scheme, mapping[`${side}Scheme`])) || mapping[`${side}Scheme`]
+      const scheme = new jskos.ConceptScheme(mapping[`${side}Scheme`])
+      jskos.conceptsOfMapping(mapping, side).forEach(concept => {
+        if (!concept.notation?.[0]) {
+          const notation = scheme.notationFromUri(concept.uri)
+          if (notation) {
+            concept.notation = [notation]
+          }
+        }
+      })
+    })
+  })
   state.mappings = mappings
   const suggestions = []
   for (const mapping of mappings) {
