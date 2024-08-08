@@ -287,6 +287,10 @@ watch(() => state.ppn, async (ppn) => {
   console.timeEnd(`Load PPN ${ppn}`)
 })
 
+function submitEnrichments() {
+  alert("Funktion nicht implementiert.")
+}
+
 const examples = [
   "389598534",
   "1830228498",
@@ -476,6 +480,13 @@ const examples = [
         <template v-if="state.ppn && state.loadingPhase > 4 && selectedSuggestionsPica">
           <h2>Ausgewählte Anreicherungen in PICA</h2>
           <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
+          <p>
+            <button 
+              class="button"
+              @click="submitEnrichments">
+              Auswahl in Datenbank eintragen
+            </button>
+          </p>
         </template>
       </div>
     </main>
