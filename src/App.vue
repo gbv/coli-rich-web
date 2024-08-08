@@ -274,7 +274,9 @@ const examples = [
           alt="coli-conc Logo">
       </a>
       <h1>
-        <a href="/">
+        <a 
+          href=""
+          @click.prevent="state.ppn = null">
           coli-rich
         </a>
       </h1>
