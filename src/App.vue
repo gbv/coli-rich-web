@@ -68,6 +68,9 @@ addEventListener("popstate", initializeFromUrl)
 function updateUrl({ ppn } = {}) {
   const hash = window.location.hash
   const urlParams = new URLSearchParams(window.location.search)
+  if ((urlParams.get("ppn") || null) === ppn) {
+    return
+  }
   if (ppn) {
     urlParams.set("ppn", ppn)
   } else {
