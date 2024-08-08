@@ -68,7 +68,7 @@ const initPromise = (async () => {
   bartocRegistry.init()
   concordanceRegistry.init()
   // Load supported schemes from subjects-api
-  const schemes = await (await fetch(`${subjectsApi}/voc`)).json()
+  const schemes = (await (await fetch(`${subjectsApi}/voc`)).json()).filter(({ uri }) => uri)
   const schemesFromBARTOC = await bartocRegistry.getSchemes({
     params: {
       uri: schemes.map(scheme => scheme.uri).join("|"),
@@ -179,12 +179,19 @@ watch(() => state.ppn, async (ppn) => {
   console.time("Load mappings")
   state.loadingPhase = 3
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
-  const mappings = subjects.length ? await concordanceRegistry.getMappings({
-    from: subjects.map(s => s.uri).join("|"),
-    toScheme: state.schemes.map(s => s.uri).join("|"),
-    direction: "both",
-    cardinality: "1-to-1",
-  }) : []
+  // TODO: This is currently a workaround for a suspected bug with direction=both
+  const mappings = subjects.length ? [
+    ...await concordanceRegistry.getMappings({
+      from: subjects.map(s => s.uri).join("|"),
+      toScheme: state.schemes.map(s => s.uri).join("|"),
+      cardinality: "1-to-1",
+    }),
+    ...await concordanceRegistry.getMappings({
+      to: subjects.map(s => s.uri).join("|"),
+      fromScheme: state.schemes.map(s => s.uri).join("|"),
+      cardinality: "1-to-1",
+    }),
+  ] : []
   // TODO: This needs to be fixed in the data!
   const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
   if (mappingsWithoutType.length) {
