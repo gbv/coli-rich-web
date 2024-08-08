@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, watch, onMounted } from "vue"
+import { ref, reactive, watch, onMounted, computed } from "vue"
 import { LoadingIndicator } from "jskos-vue"
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
@@ -30,6 +30,36 @@ const state = reactive({
   subjects: [],
   mappings: [],
   suggestions: [],
+})
+
+const selectedSuggestionsPica = computed(() => {
+  const suggestions = state.suggestions.filter(({ selected }) => selected)
+  if (!suggestions.length) {
+    return null
+  }
+  return `  003@ $0${state.ppn}\n` + suggestions.map(({ target, mappings }) => {
+    let pica = `+ ${target.inScheme[0].PICA} `
+    pica += `$a${jskos.notation(target)}`
+    pica += "$Acoli-conc"
+    mappings.forEach(({ uri }) => {
+      pica += `$A${uri}`
+    })
+    return pica
+  }).join("\n")
+})
+
+const selectAllSuggestions = computed({
+  get() {
+    if (!state.suggestions.find(({ selected }) => !selected)) {
+      return true
+    }
+    return false
+  },
+  set(value) {
+    state.suggestions.forEach(suggestion => {
+      suggestion.selected = value
+    })
+  },
 })
 
 const initPromise = (async () => {
@@ -194,6 +224,7 @@ watch(() => state.ppn, async (ppn) => {
       suggestions.push({
         target,
         mappings: [mapping],
+        selected: false,
       })
     }
   }
@@ -394,11 +425,16 @@ const examples = [
               <th style="min-width: 50%;">
                 Quellen
               </th>
+              <th>
+                <input
+                  v-model="selectAllSuggestions"
+                  type="checkbox">
+              </th>
             </tr>
           </thead>
           <tbody>
             <tr 
-              v-for="{ target, mappings } in state.suggestions"
+              v-for="({ target, mappings }, index) in state.suggestions"
               :key="target.uri">
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
               <td>{{ jskos.notation(target) }} {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
@@ -421,6 +457,11 @@ const examples = [
                   </li>
                 </ul>
               </td>
+              <td>
+                <input
+                  v-model="state.suggestions[index].selected"
+                  type="checkbox">
+              </td>
             </tr>
           </tbody>
         </table>
@@ -431,6 +472,10 @@ const examples = [
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
+        <template v-if="state.ppn && state.loadingPhase > 4 && selectedSuggestionsPica">
+          <h2>Ausgewählte Anreicherungen in PICA</h2>
+          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
+        </template>
       </div>
     </main>
     <footer class="footer">
