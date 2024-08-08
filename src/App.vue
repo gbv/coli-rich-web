@@ -134,12 +134,12 @@ watch(() => state.ppn, async (ppn) => {
   // Load mappings for subjects
   console.time("Load mappings")
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
-  const mappings = await concordanceRegistry.getMappings({
+  const mappings = subjects.length ? await concordanceRegistry.getMappings({
     from: subjects.map(s => s.uri).join("|"),
     toScheme: state.schemes.map(s => s.uri).join("|"),
     direction: "both",
     cardinality: "1-to-1",
-  })
+  }) : []
   // TODO: This needs to be fixed in the data!
   const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
   if (mappingsWithoutType.length) {
@@ -285,7 +285,8 @@ const examples = [
           <input
             v-model="ppninput"
             type="text"
-            placeholder="PPN">
+            placeholder="PPN"
+            @keyup.enter="!state.loading && (state.ppn = ppninput)">
           <button 
             :disabled="state.loading || !ppninput"
             @click="state.ppn = ppninput">
@@ -305,8 +306,10 @@ const examples = [
             </template>
           </template>
         </p>
-        <h2>Titeldaten</h2>
-        <table v-if="!state.loading && state.ppn">
+        <h2 v-if="state.ppn">
+          Titeldaten
+        </h2>
+        <table v-if="!state.loading && state.ppn && state.titleName">
           <tbody>
             <tr>
               <th>PPN</th>
@@ -330,8 +333,16 @@ const examples = [
             </tr>
           </tbody>
         </table>
-        <h2>Mögliche Anreicherungen</h2>
-        <table v-if="!state.loading && state.ppn">
+        <p v-else-if="state.ppn && !state.loading && !state.titleName">
+          Keine Titeldaten zu {{ state.ppn }} gefunden.
+        </p>
+        <p v-else-if="state.loading">
+          Loading...
+        </p>
+        <h2 v-if="state.ppn">
+          Mögliche Anreicherungen
+        </h2>
+        <table v-if="state.ppn && !state.loading && state.suggestions.length">
           <thead>
             <tr>
               <th>Vokabular</th>
@@ -367,6 +378,12 @@ const examples = [
             </tr>
           </tbody>
         </table>
+        <p v-else-if="state.ppn && !state.loading && state.suggestions.length === 0">
+          Keine Anreicherungen verfügbar.
+        </p>
+        <p v-else-if="state.loading">
+          Loading...
+        </p>
       </div>
     </main>
     <footer class="footer">
