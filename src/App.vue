@@ -16,7 +16,7 @@ const concordanceRegistry = cdk.initializeRegistry({
   api: "https://coli-conc.gbv.de/api/",
 })
 
-const subjectsApi = "http://localhost:3141"
+const subjectsApi = "https://coli-conc.gbv.de/subjects-k10plus"
 const ppninput = ref("")
 
 const state = reactive({
