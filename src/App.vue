@@ -111,6 +111,10 @@ watch(() => state.ppn, async (ppn) => {
   } catch (error) {
     console.error(error)
     state.error = true
+    state.loading = false
+    console.timeEnd("Load title data")
+    console.timeEnd(`Load PPN ${ppn}`)
+    return
   }
   console.timeEnd("Load title data")
 
@@ -359,6 +363,9 @@ const examples = [
             </tr>
           </tbody>
         </table>
+        <p v-else-if="state.error">
+          Fehler beim Laden von Titeldaten zu {{ state.ppn }}.
+        </p>
         <p v-else-if="state.ppn && state.loadingPhase > 1 && !state.titleName">
           Keine Titeldaten zu {{ state.ppn }} gefunden.
         </p>
