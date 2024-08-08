@@ -339,6 +339,7 @@ const examples = [
             placeholder="PPN"
             @keyup.enter="!state.loading && (state.ppn = ppninput)">
           <button 
+            class="button"
             :disabled="state.loading || !ppninput"
             @click="state.ppn = ppninput">
             Laden
@@ -519,5 +520,9 @@ header > h1 {
   list-style: none !important;
   margin: 0; 
   padding: 0;
+}
+.button {
+  margin: 0 10px;
+  padding: 4px 20px;
 }
 </style>
