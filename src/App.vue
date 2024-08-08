@@ -342,7 +342,9 @@ const examples = [
         <table v-if="state.ppn && state.loadingPhase > 1 && state.titleName">
           <tbody>
             <tr>
-              <th>PPN</th>
+              <th style="max-width: 30%;">
+                PPN
+              </th>
               <td>{{ state.ppn }}</td>
             </tr>
             <tr>
@@ -381,7 +383,9 @@ const examples = [
             <tr>
               <th>Vokabular</th>
               <th>Notation</th>
-              <th>Quellen</th>
+              <th style="min-width: 50%;">
+                Quellen
+              </th>
             </tr>
           </thead>
           <tbody>
