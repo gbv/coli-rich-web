@@ -299,7 +299,7 @@ const examples = [
         <p>
           Mit folgendem Formular können Titeldaten aus PICA-Datenbanken abgerufen werden, um diese mit Sacherschließungsdaten (auf Basis von coli-conc Mappings) anzureichern.
         </p>
-        <p>Dieses Tool ist in Entwicklung.</p>
+        <p>Dieses Tool ist in Entwicklung und nur zur Demonstration. Aktuell ist keine Eintragung in die Datenbank möglich.</p>
         <p>
           Titel laden
           <input
