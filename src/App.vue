@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, watch, onMounted } from "vue"
+import { LoadingIndicator } from "jskos-vue"
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
 addAllProviders()
@@ -23,6 +24,7 @@ const state = reactive({
   schemes: [],
   ppn: null,
   loading: true,
+  loadingPhase: 0,
   error: false,
   titleName: "",
   subjects: [],
@@ -85,6 +87,7 @@ watch(() => state.ppn, async (ppn) => {
   console.time(`Load PPN ${ppn}`)
 
   state.loading = true
+  state.loadingPhase = 0
   state.error = false
 
   state.titleName = ""
@@ -95,6 +98,7 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load title data from CSL2 API
   console.time("Load title data")
+  state.loadingPhase = 1
   try {
     const cslResult = await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json()
     state.titleName = cslResult[1][0]
@@ -112,6 +116,7 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load concept data for subjects
   console.time("Load concept data for subjects")
+  state.loadingPhase = 2
   try {
     await Promise.all(state.subjects.map(async ({ scheme, subjects }) => {
       if (!scheme.API?.length || !scheme._registry) {
@@ -133,6 +138,7 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load mappings for subjects
   console.time("Load mappings")
+  state.loadingPhase = 3
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
   const mappings = subjects.length ? await concordanceRegistry.getMappings({
     from: subjects.map(s => s.uri).join("|"),
@@ -212,6 +218,7 @@ watch(() => state.ppn, async (ppn) => {
 
   // Load concept data for mappings
   console.time("Load concept data for mappings")
+  state.loadingPhase = 4
   const suggestionsGroupedByScheme = state.schemes.map(scheme => ({ scheme, concepts: suggestions.filter(({ target }) => jskos.compare(target.inScheme[0], scheme)).map(({ target }) => target) })).filter(group => group.concepts.length)
   // TODO: Fix code repetition from above
   await Promise.all(suggestionsGroupedByScheme.map(async ({ scheme, concepts: conceptsToLoad }) => {
@@ -236,6 +243,7 @@ watch(() => state.ppn, async (ppn) => {
   console.timeEnd("Load concept data for mappings")
   
   state.loading = false
+  state.loadingPhase = 10
   console.timeEnd(`Load PPN ${ppn}`)
 })
 
@@ -292,24 +300,42 @@ const examples = [
             @click="state.ppn = ppninput">
             Laden
           </button>
-          Beispiele:
-          <template
-            v-for="(ppn, index) in examples"
-            :key="ppn">
-            <a
-              href=""
-              @click.prevent="state.ppn = ppn">
-              {{ ppn }}
-            </a>
-            <template v-if="index < examples.length - 1">
-              ·
+          <span v-if="!state.loading">
+            Beispiele:
+            <template
+              v-for="(ppn, index) in examples"
+              :key="ppn">
+              <a
+                href=""
+                @click.prevent="state.ppn = ppn">
+                {{ ppn }}
+              </a>
+              <template v-if="index < examples.length - 1">
+                ·
+              </template>
             </template>
-          </template>
+          </span>
+          <span v-else>
+            <loading-indicator
+              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
+            <span v-if="state.loadingPhase === 1">
+              Titeldaten werden geladen...
+            </span>
+            <span v-if="state.loadingPhase === 2">
+              Konzeptdaten für Sacherschließung werden geladen...
+            </span>
+            <span v-if="state.loadingPhase === 3">
+              Anreicherungsvorschläge auf Basis von Mappings werden gelanden...
+            </span>
+            <span v-if="state.loadingPhase === 4">
+              Konzeptdaten für Anreicherungsvorschläge werden geladen...
+            </span>
+          </span>
         </p>
-        <h2 v-if="state.ppn">
+        <h2 v-if="state.ppn && state.loadingPhase >= 1">
           Titeldaten
         </h2>
-        <table v-if="!state.loading && state.ppn && state.titleName">
+        <table v-if="state.ppn && state.loadingPhase > 1 && state.titleName">
           <tbody>
             <tr>
               <th>PPN</th>
@@ -333,16 +359,17 @@ const examples = [
             </tr>
           </tbody>
         </table>
-        <p v-else-if="state.ppn && !state.loading && !state.titleName">
+        <p v-else-if="state.ppn && state.loadingPhase > 1 && !state.titleName">
           Keine Titeldaten zu {{ state.ppn }} gefunden.
         </p>
-        <p v-else-if="state.loading">
-          Loading...
+        <p v-else-if="state.loadingPhase === 1">
+          <loading-indicator
+            style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
-        <h2 v-if="state.ppn">
+        <h2 v-if="state.ppn && state.loadingPhase >= 3">
           Mögliche Anreicherungen
         </h2>
-        <table v-if="state.ppn && !state.loading && state.suggestions.length">
+        <table v-if="state.ppn && state.loadingPhase > 3 && state.suggestions.length">
           <thead>
             <tr>
               <th>Vokabular</th>
@@ -378,11 +405,12 @@ const examples = [
             </tr>
           </tbody>
         </table>
-        <p v-else-if="state.ppn && !state.loading && state.suggestions.length === 0">
+        <p v-else-if="state.ppn && state.loadingPhase > 3 && state.suggestions.length === 0">
           Keine Anreicherungen verfügbar.
         </p>
-        <p v-else-if="state.loading">
-          Loading...
+        <p v-else-if="state.loadingPhase === 3">
+          <loading-indicator
+            style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
       </div>
     </main>

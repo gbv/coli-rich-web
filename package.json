@@ -25,6 +25,7 @@
   "dependencies": {
     "cocoda-sdk": "^3.4.9",
     "jskos-tools": "^1.0.40",
+    "jskos-vue": "^0.3.13",
     "vue": "^3.4.31"
   },
   "devDependencies": {
