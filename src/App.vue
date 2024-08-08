@@ -57,11 +57,13 @@ const initPromise = (async () => {
   console.timeEnd("Init")
 })()
 
-onMounted(() => {
+const initializeFromUrl = () => {
   // Get PPN parameter from URL
   const urlParams = new URLSearchParams(window.location.search)
   state.ppn = urlParams.get("ppn") || null
-})
+}
+onMounted(initializeFromUrl)
+addEventListener("popstate", initializeFromUrl)
 
 function updateUrl({ ppn } = {}) {
   const hash = window.location.hash
@@ -78,7 +80,7 @@ function updateUrl({ ppn } = {}) {
   }
   // Note that hash/fragment needs to be at the end of the URL, otherwise the search params will be considered part of the hash!
   url += hash
-  window.history.replaceState({}, "", url)
+  window.history.pushState({}, "", url)
 }
 
 watch(() => state.ppn, async (ppn) => {
