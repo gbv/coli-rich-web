@@ -167,7 +167,9 @@ watch(() => state.ppn, async (ppn) => {
   try {
     const cslResult = await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json()
     state.titleName = cslResult[1][0]
-    const subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/opac-de-627:ppn:${ppn}&live=1`)).json()
+    let subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/opac-de-627:ppn:${ppn}&live=1`)).json()
+    // Filter duplicate subjects
+    subjects = [...new Set(subjects.map(s => s.uri))].map(uri_ => subjects.find(({ uri }) => uri === uri_))
     // Add scheme data to subjects
     subjects.forEach(subject => {
       subject.inScheme[0] = state.schemes.find(scheme => jskos.compare(scheme, subject.inScheme[0]))
