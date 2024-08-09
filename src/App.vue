@@ -87,6 +87,36 @@ const initPromise = (async () => {
   console.timeEnd("Init")
 })()
 
+async function getMappingsForSubjects(subjects) {
+  if (!subjects.length) {
+    return []
+  }
+  const 
+    toScheme = state.schemes.map(s => s.uri).join("|"), 
+    cardinality = "1-to-1",
+    configs = [], 
+    maxLength = 600 // Prevent URL length issues
+  let current = []
+  
+  for (const subject of subjects.concat(null)) {
+    const from = current.map(s => s.uri).join("|")
+    // Cutoff when maxLength is exceeded (or after last element)
+    if (from.length >= maxLength || subject === null) {
+      current = []
+      ;["forward", "backward"].forEach(direction => {
+        configs.push({
+          from,
+          toScheme,
+          cardinality,
+          direction,
+        })
+      })
+    }
+    current.push(subject)
+  }
+  return (await Promise.all(configs.map(config => concordanceRegistry.getMappings(config)))).reduce((prev, cur) => prev.concat(cur), [])
+}
+
 const initializeFromUrl = () => {
   // Get PPN parameter from URL
   const urlParams = new URLSearchParams(window.location.search)
@@ -180,18 +210,7 @@ watch(() => state.ppn, async (ppn) => {
   state.loadingPhase = 3
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
   // TODO: This is currently a workaround for a suspected bug with direction=both
-  const mappings = subjects.length ? [
-    ...await concordanceRegistry.getMappings({
-      from: subjects.map(s => s.uri).join("|"),
-      toScheme: state.schemes.map(s => s.uri).join("|"),
-      cardinality: "1-to-1",
-    }),
-    ...await concordanceRegistry.getMappings({
-      to: subjects.map(s => s.uri).join("|"),
-      fromScheme: state.schemes.map(s => s.uri).join("|"),
-      cardinality: "1-to-1",
-    }),
-  ] : []
+  const mappings = await getMappingsForSubjects(subjects)
   // TODO: This needs to be fixed in the data!
   const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
   if (mappingsWithoutType.length) {
