@@ -231,6 +231,9 @@ watch(() => state.ppn, async (ppn) => {
   if (mappingsWithoutType.length) {
     console.warn("The following mappings without a mapping type were loaded and need to be fixed:", mappingsWithoutType.map(m => m.uri))
   }
+  mappingsWithoutType.forEach(mapping => {
+    mapping.type = ["http://www.w3.org/2004/02/skos/core#mappingRelation"]
+  })
   // Supplement mappings with scheme data (including determining notations)
   mappings.forEach(mapping => {
     ["from", "to"].forEach(side => {
@@ -503,7 +506,7 @@ const examples = [
                     {{ jskos.notation(mapping.fromScheme) }}:
                     {{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}
                     {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
-                    {{ jskos.notation(jskos.mappingTypeByUri(mapping.type?.[0] || "http://www.w3.org/2004/02/skos/core#mappingRelation")) }}
+                    {{ jskos.notation(jskos.mappingTypeByUri(mapping.type[0])) }}
                     {{ jskos.notation(mapping.toScheme) }}:
                     {{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}
                     {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "to")[0], { fallbackToUri: false }) }}
