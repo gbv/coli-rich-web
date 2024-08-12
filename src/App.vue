@@ -33,9 +33,40 @@ const state = reactive({
 })
 
 const vocabularyFilterShown = ref(false)
+const typeFilterShown = ref(false)
 
 const suggestionSchemes = reactive({})
-const suggestions = computed(() => state.suggestions.filter(suggestion => suggestionSchemes[suggestion.target.inScheme[0].uri]))
+const suggestionTypes = reactive({})
+
+// TODO: Sorting is more complicated as mapping direction needs to be accounted for
+const mappingTypePriority = [
+  "http://www.w3.org/2004/02/skos/core#exactMatch",
+  "http://www.w3.org/2004/02/skos/core#closeMatch",
+  "http://www.w3.org/2004/02/skos/core#broadMatch",
+  "http://www.w3.org/2004/02/skos/core#narrowMatch",
+  "http://www.w3.org/2004/02/skos/core#mappingRelation",
+  "http://www.w3.org/2004/02/skos/core#relatedMatch",
+]
+
+const suggestions = computed(() => state.suggestions.filter(
+  suggestion => suggestionSchemes[suggestion.target.inScheme[0].uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length,
+).sort((a, b) => {
+  const aMappings = a.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
+  const bMappings = b.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
+  const aPriority = Math.min(...aMappings.map(mapping => {
+    const index = mappingTypePriority.indexOf(mapping.type[0])
+    return index === -1 ? 9 : index
+  }), 10)
+  const bPriority = Math.min(...bMappings.map(mapping => {
+    const index = mappingTypePriority.indexOf(mapping.type[0])
+    return index === -1 ? 9 : index
+  }), 10)
+  if (aPriority === bPriority) {
+    // Fallback to number of mappings
+    return bMappings.length - aMappings.length
+  }
+  return aPriority - bPriority
+}))
 
 const selectedSuggestionsPica = computed(() => {
   const filteredSuggestions = suggestions.value.filter(({ selected }) => selected)
@@ -94,6 +125,14 @@ const initPromise = (async () => {
     const storageKey = `coli-rich-web_schemes-${uri}`, value = localStorage.getItem(storageKey)
     suggestionSchemes[uri] = value === "false" ? false : true
     watch(() => suggestionSchemes[uri], (value) => {
+      localStorage.setItem(storageKey, value)
+    })
+  }
+  // Set suggestion types, including reading from/writing to local storage
+  for (const { uri } of jskos.mappingTypes) {
+    const storageKey = `coli-rich-web_types-${uri}`, value = localStorage.getItem(storageKey)
+    suggestionTypes[uri] = value === "false" ? false : true
+    watch(() => suggestionTypes[uri], (value) => {
       localStorage.setItem(storageKey, value)
     })
   }
@@ -272,30 +311,6 @@ watch(() => state.ppn, async (ppn) => {
       })
     }
   }
-  // TODO: This is more complicated as mapping direction needs to be accounted for
-  const mappingTypePriority = [
-    "http://www.w3.org/2004/02/skos/core#exactMatch",
-    "http://www.w3.org/2004/02/skos/core#closeMatch",
-    "http://www.w3.org/2004/02/skos/core#broadMatch",
-    "http://www.w3.org/2004/02/skos/core#narrowMatch",
-    "http://www.w3.org/2004/02/skos/core#mappingRelation",
-    "http://www.w3.org/2004/02/skos/core#relatedMatch",
-  ]
-  suggestions.sort((a, b) => {
-    const aPriority = Math.min(...a.mappings.map(mapping => {
-      const index = mappingTypePriority.indexOf(mapping.type?.[0])
-      return index === -1 ? 9 : index
-    }), 10)
-    const bPriority = Math.min(...b.mappings.map(mapping => {
-      const index = mappingTypePriority.indexOf(mapping.type?.[0])
-      return index === -1 ? 9 : index
-    }), 10)
-    if (aPriority === bPriority) {
-      // Fallback to number of mappings
-      return b.mappings.length - a.mappings.length
-    }
-    return aPriority - bPriority
-  })
   state.suggestions = suggestions
   console.log(suggestions)
   console.timeEnd("Load mappings")
@@ -483,7 +498,11 @@ const examples = [
               </th>
               <th>Notation</th>
               <th style="min-width: 50%;">
-                Quellen
+                <a
+                  href=""
+                  @click.prevent="typeFilterShown = true">
+                  Quellen
+                </a>
               </th>
             </tr>
           </thead>
@@ -502,7 +521,10 @@ const examples = [
                 <ul class="plainList">
                   <li
                     v-for="mapping in mappings"
-                    :key="mapping.uri">
+                    :key="mapping.uri"
+                    :class="{
+                      suggestionFaded: !suggestionTypes[mapping.type[0]],
+                    }">
                     {{ jskos.notation(mapping.fromScheme) }}:
                     {{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}
                     {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
@@ -598,6 +620,35 @@ const examples = [
       </template>
     </div>
   </modal>
+  <!-- Type filter modal -->
+  <modal
+    v-model="typeFilterShown"
+    style="--jskos-vue-modal-bgColor: #F5F3F3;">
+    <template #header>
+      <h1 style="padding: 0;">
+        Mappingtypen filtern
+      </h1>
+    </template>
+    <div style="padding: 10px;">
+      Zeige Anreicherungen basierend auf folgenden Mappingtypen:
+      <template 
+        v-for="type in jskos.mappingTypes"
+        :key="type.uri">
+        <ul class="plainList">
+          <li style="user-select: none;">
+            <input
+              :id="`suggestionTypes-${type.uri}`"
+              v-model="suggestionTypes[type.uri]"
+              type="checkbox">
+            <label
+              :for="`suggestionTypes-${type.uri}`">
+              {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }}
+            </label>
+          </li>
+        </ul>
+      </template>
+    </div>
+  </modal>
 </template>
 
 <style>
@@ -614,5 +665,8 @@ header > h1 {
 .button {
   margin: 0 10px;
   padding: 4px 20px;
+}
+.suggestionFaded {
+  color: grey;
 }
 </style>
