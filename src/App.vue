@@ -4,6 +4,7 @@ import { LoadingIndicator, Modal } from "jskos-vue"
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
 addAllProviders()
+jskos.languagePreference.defaults = ["de", "en"]
 import config from "./config.js"
 
 const { version, name } = config
