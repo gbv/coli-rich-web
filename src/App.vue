@@ -628,36 +628,34 @@ const examples = [
     </template>
     <div style="padding: 20px;">
       Zeige Anreicherungen aus den folgenden Vokabularen:
-      <template 
-        v-for="scheme in state.schemes.slice().sort((a, b) => {
-          const aSuggestions = numberOfSuggestionsByScheme[a.uri]
-          const bSuggestions = numberOfSuggestionsByScheme[b.uri]
-          if (aSuggestions > bSuggestions) {
-            return -1
-          }
-          if (aSuggestions < bSuggestions) {
-            return 1
-          }
-          return 0
-        })"
-        :key="scheme.uri">
-        <ul class="plainList">
-          <li 
-            style="user-select: none;"
-            :class="{
-              faded: numberOfSuggestionsByScheme[scheme.uri] === 0,
-            }">
-            <input
-              :id="`suggestionSchemes-${scheme.uri}`"
-              v-model="suggestionSchemes[scheme.uri]"
-              type="checkbox">
-            <label
-              :for="`suggestionSchemes-${scheme.uri}`">
-              {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByScheme[scheme.uri] }})
-            </label>
-          </li>
-        </ul>
-      </template>
+      <ul class="plainList">
+        <li 
+          v-for="scheme in state.schemes.slice().sort((a, b) => {
+            const aSuggestions = numberOfSuggestionsByScheme[a.uri]
+            const bSuggestions = numberOfSuggestionsByScheme[b.uri]
+            if (aSuggestions > bSuggestions) {
+              return -1
+            }
+            if (aSuggestions < bSuggestions) {
+              return 1
+            }
+            return 0
+          })"
+          :key="scheme.uri"
+          style="user-select: none;"
+          :class="{
+            faded: numberOfSuggestionsByScheme[scheme.uri] === 0,
+          }">
+          <input
+            :id="`suggestionSchemes-${scheme.uri}`"
+            v-model="suggestionSchemes[scheme.uri]"
+            type="checkbox">
+          <label
+            :for="`suggestionSchemes-${scheme.uri}`">
+            {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByScheme[scheme.uri] }})
+          </label>
+        </li>
+      </ul>
     </div>
   </modal>
   <!-- Type filter modal -->
@@ -671,36 +669,34 @@ const examples = [
     </template>
     <div style="padding: 20px;">
       Zeige Anreicherungen basierend auf folgenden Mappingtypen:
-      <template 
-        v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
-          const aSuggestions = numberOfSuggestionsByType[a.uri]
-          const bSuggestions = numberOfSuggestionsByType[b.uri]
-          if (aSuggestions > bSuggestions) {
-            return -1
-          }
-          if (aSuggestions < bSuggestions) {
-            return 1
-          }
-          return 0
-        })"
-        :key="type.uri">
-        <ul class="plainList">
-          <li 
-            style="user-select: none;"
-            :class="{
-              faded: numberOfSuggestionsByType[type.uri] === 0,
-            }">
-            <input
-              :id="`suggestionTypes-${type.uri}`"
-              v-model="suggestionTypes[type.uri]"
-              type="checkbox">
-            <label
-              :for="`suggestionTypes-${type.uri}`">
-              {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByType[type.uri] }})
-            </label>
-          </li>
-        </ul>
-      </template>
+      <ul class="plainList">
+        <li 
+          v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
+            const aSuggestions = numberOfSuggestionsByType[a.uri]
+            const bSuggestions = numberOfSuggestionsByType[b.uri]
+            if (aSuggestions > bSuggestions) {
+              return -1
+            }
+            if (aSuggestions < bSuggestions) {
+              return 1
+            }
+            return 0
+          })"
+          :key="type.uri"
+          style="user-select: none;"
+          :class="{
+            faded: numberOfSuggestionsByType[type.uri] === 0,
+          }">
+          <input
+            :id="`suggestionTypes-${type.uri}`"
+            v-model="suggestionTypes[type.uri]"
+            type="checkbox">
+          <label
+            :for="`suggestionTypes-${type.uri}`">
+            {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByType[type.uri] }})
+          </label>
+        </li>
+      </ul>
     </div>
   </modal>
 </template>
