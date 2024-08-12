@@ -68,6 +68,21 @@ const suggestions = computed(() => state.suggestions.filter(
   return aPriority - bPriority
 }))
 
+const numberOfSuggestionsByScheme = computed(() => {
+  const result = {}
+  state.schemes.forEach(scheme => {
+    result[scheme.uri] = state.suggestions.filter(suggestion => jskos.compare(scheme, suggestion.scheme)).length
+  })
+  return result
+})
+const numberOfSuggestionsByType = computed(() => {
+  const result = {}
+  jskos.mappingTypes.forEach(type => {
+    result[type.uri] = state.suggestions.filter(suggestion => suggestion.mappings.find(mapping => mapping.type[0] === type.uri)).length
+  })
+  return result
+})
+
 const selectedSuggestionsPica = computed(() => {
   const filteredSuggestions = suggestions.value.filter(({ selected }) => selected)
   if (!filteredSuggestions.length) {
@@ -604,17 +619,31 @@ const examples = [
     <div style="padding: 20px;">
       Zeige Anreicherungen aus den folgenden Vokabularen:
       <template 
-        v-for="scheme in state.schemes"
+        v-for="scheme in state.schemes.slice().sort((a, b) => {
+          const aSuggestions = numberOfSuggestionsByScheme[a.uri]
+          const bSuggestions = numberOfSuggestionsByScheme[b.uri]
+          if (aSuggestions > bSuggestions) {
+            return -1
+          }
+          if (aSuggestions < bSuggestions) {
+            return 1
+          }
+          return 0
+        })"
         :key="scheme.uri">
         <ul class="plainList">
-          <li style="user-select: none;">
+          <li 
+            style="user-select: none;"
+            :class="{
+              faded: numberOfSuggestionsByScheme[scheme.uri] === 0,
+            }">
             <input
               :id="`suggestionSchemes-${scheme.uri}`"
               v-model="suggestionSchemes[scheme.uri]"
               type="checkbox">
             <label
               :for="`suggestionSchemes-${scheme.uri}`">
-              {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }}
+              {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByScheme[scheme.uri] }})
             </label>
           </li>
         </ul>
@@ -633,17 +662,31 @@ const examples = [
     <div style="padding: 20px;">
       Zeige Anreicherungen basierend auf folgenden Mappingtypen:
       <template 
-        v-for="type in jskos.mappingTypes"
+        v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
+          const aSuggestions = numberOfSuggestionsByType[a.uri]
+          const bSuggestions = numberOfSuggestionsByType[b.uri]
+          if (aSuggestions > bSuggestions) {
+            return -1
+          }
+          if (aSuggestions < bSuggestions) {
+            return 1
+          }
+          return 0
+        })"
         :key="type.uri">
         <ul class="plainList">
-          <li style="user-select: none;">
+          <li 
+            style="user-select: none;"
+            :class="{
+              faded: numberOfSuggestionsByType[type.uri] === 0,
+            }">
             <input
               :id="`suggestionTypes-${type.uri}`"
               v-model="suggestionTypes[type.uri]"
               type="checkbox">
             <label
               :for="`suggestionTypes-${type.uri}`">
-              {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }}
+              {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByType[type.uri] }})
             </label>
           </li>
         </ul>
