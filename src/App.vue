@@ -560,6 +560,16 @@ const examples = [
         </table>
         <p v-else-if="state.ppn && state.loadingPhase > 3 && suggestions.length === 0">
           Keine Anreicherungen verfügbar.
+          <template v-if="state.suggestions.length">
+            {{ state.suggestions.length }} Anreicherungen wurden herausgefiltert:
+            <a
+              href=""
+              @click.prevent="vocabularyFilterShown = true">Vokabular-Filter prüfen</a>
+            ·
+            <a
+              href=""
+              @click.prevent="typeFilterShown = true">Mapping-Typ-Filter prüfen</a>
+          </template>
         </p>
         <p v-else-if="state.loadingPhase === 3">
           <loading-indicator
