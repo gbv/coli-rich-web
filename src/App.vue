@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, watch, onMounted, computed } from "vue"
-import { LoadingIndicator } from "jskos-vue"
+import { LoadingIndicator, Modal } from "jskos-vue"
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
 addAllProviders()
@@ -32,12 +32,17 @@ const state = reactive({
   suggestions: [],
 })
 
+const vocabularyFilterShown = ref(false)
+
+const suggestionSchemes = reactive({})
+const suggestions = computed(() => state.suggestions.filter(suggestion => suggestionSchemes[suggestion.target.inScheme[0].uri]))
+
 const selectedSuggestionsPica = computed(() => {
-  const suggestions = state.suggestions.filter(({ selected }) => selected)
-  if (!suggestions.length) {
+  const filteredSuggestions = suggestions.value.filter(({ selected }) => selected)
+  if (!filteredSuggestions.length) {
     return null
   }
-  return `  003@ $0${state.ppn}\n` + suggestions.map(({ target, mappings }) => {
+  return `  003@ $0${state.ppn}\n` + filteredSuggestions.map(({ target, mappings }) => {
     let pica = `+ ${target.inScheme[0].PICA} `
     pica += `$a${jskos.notation(target)}`
     pica += "$Acoli-conc"
@@ -50,7 +55,7 @@ const selectedSuggestionsPica = computed(() => {
 
 const selectAllSuggestions = computed({
   get() {
-    if (!state.suggestions.find(({ selected }) => !selected)) {
+    if (!suggestions.value.find(({ selected }) => !selected)) {
       return true
     }
     return false
@@ -84,6 +89,14 @@ const initPromise = (async () => {
   }))
   state.schemes = schemes
   state.loading = false
+  // Set suggestion schemes, including reading from/writing to local storage
+  for (const { uri } of schemes) {
+    const storageKey = `coli-rich-web_scheme-${uri}`, value = localStorage.getItem(storageKey)
+    suggestionSchemes[uri] = value === "false" ? false : true
+    watch(() => suggestionSchemes[uri], (value) => {
+      localStorage.setItem(storageKey, value)
+    })
+  }
   console.timeEnd("Init")
 })()
 
@@ -450,7 +463,7 @@ const examples = [
         <h2 v-if="state.ppn && state.loadingPhase >= 3">
           Mögliche Anreicherungen
         </h2>
-        <table v-if="state.ppn && state.loadingPhase > 3 && state.suggestions.length">
+        <table v-if="state.ppn && state.loadingPhase > 3 && suggestions.length">
           <thead>
             <tr>
               <th>
@@ -458,7 +471,13 @@ const examples = [
                   v-model="selectAllSuggestions"
                   type="checkbox">
               </th>
-              <th>Vokabular</th>
+              <th>
+                <a
+                  href=""
+                  @click.prevent="vocabularyFilterShown = true">
+                  Vokabular
+                </a>
+              </th>
               <th>Notation</th>
               <th style="min-width: 50%;">
                 Quellen
@@ -467,11 +486,11 @@ const examples = [
           </thead>
           <tbody>
             <tr 
-              v-for="({ target, mappings }, index) in state.suggestions"
+              v-for="({ target, mappings }, index) in suggestions"
               :key="target.uri">
               <td>
                 <input
-                  v-model="state.suggestions[index].selected"
+                  v-model="suggestions[index].selected"
                   type="checkbox">
               </td>
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
@@ -498,7 +517,7 @@ const examples = [
             </tr>
           </tbody>
         </table>
-        <p v-else-if="state.ppn && state.loadingPhase > 3 && state.suggestions.length === 0">
+        <p v-else-if="state.ppn && state.loadingPhase > 3 && suggestions.length === 0">
           Keine Anreicherungen verfügbar.
         </p>
         <p v-else-if="state.loadingPhase === 3">
@@ -547,6 +566,35 @@ const examples = [
       </p>
     </footer>
   </div>
+  <!-- Vokabulary filter modal -->
+  <modal
+    v-model="vocabularyFilterShown"
+    style="--jskos-vue-modal-bgColor: #F5F3F3;">
+    <template #header>
+      <h1 style="padding: 0;">
+        Zielvokabulare filtern
+      </h1>
+    </template>
+    <div style="padding: 10px;">
+      Zeige Anreicherungen aus den folgenden Vokabularen:
+      <template 
+        v-for="scheme in state.schemes"
+        :key="scheme.uri">
+        <ul class="plainList">
+          <li style="user-select: none;">
+            <input
+              :id="`suggestionSchemes-${scheme.uri}`"
+              v-model="suggestionSchemes[scheme.uri]"
+              type="checkbox">
+            <label
+              :for="`suggestionSchemes-${scheme.uri}`">
+              {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }}
+            </label>
+          </li>
+        </ul>
+      </template>
+    </div>
+  </modal>
 </template>
 
 <style>
