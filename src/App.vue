@@ -629,6 +629,23 @@ const examples = [
     <div style="padding: 20px;">
       Zeige Anreicherungen aus den folgenden Vokabularen:
       <ul class="plainList">
+        <li>
+          <a
+            href=""
+            @click.prevent="state.schemes.forEach(({ uri }) => {
+              suggestionSchemes[uri] = true
+            })">
+            alle aktivieren
+          </a>
+          ·
+          <a
+            href=""
+            @click.prevent="state.schemes.forEach(({ uri }) => {
+              suggestionSchemes[uri] = false
+            })">
+            alle deaktivieren
+          </a>
+        </li>
         <li 
           v-for="scheme in state.schemes.slice().sort((a, b) => {
             const aSuggestions = numberOfSuggestionsByScheme[a.uri]
@@ -670,6 +687,23 @@ const examples = [
     <div style="padding: 20px;">
       Zeige Anreicherungen basierend auf folgenden Mappingtypen:
       <ul class="plainList">
+        <li>
+          <a
+            href=""
+            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
+              suggestionTypes[uri] = true
+            })">
+            alle aktivieren
+          </a>
+          ·
+          <a
+            href=""
+            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
+              suggestionTypes[uri] = false
+            })">
+            alle deaktivieren
+          </a>
+        </li>
         <li 
           v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
             const aSuggestions = numberOfSuggestionsByType[a.uri]
