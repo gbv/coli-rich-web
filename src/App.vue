@@ -453,15 +453,15 @@ const examples = [
         <table v-if="state.ppn && state.loadingPhase > 3 && state.suggestions.length">
           <thead>
             <tr>
-              <th>Vokabular</th>
-              <th>Notation</th>
-              <th style="min-width: 50%;">
-                Quellen
-              </th>
               <th>
                 <input
                   v-model="selectAllSuggestions"
                   type="checkbox">
+              </th>
+              <th>Vokabular</th>
+              <th>Notation</th>
+              <th style="min-width: 50%;">
+                Quellen
               </th>
             </tr>
           </thead>
@@ -469,6 +469,11 @@ const examples = [
             <tr 
               v-for="({ target, mappings }, index) in state.suggestions"
               :key="target.uri">
+              <td>
+                <input
+                  v-model="state.suggestions[index].selected"
+                  type="checkbox">
+              </td>
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
               <td>{{ jskos.notation(target) }} {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
               <td>
@@ -489,11 +494,6 @@ const examples = [
                       target="_blank">Details</a>
                   </li>
                 </ul>
-              </td>
-              <td>
-                <input
-                  v-model="state.suggestions[index].selected"
-                  type="checkbox">
               </td>
             </tr>
           </tbody>
