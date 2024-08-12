@@ -600,7 +600,7 @@ const examples = [
         Zielvokabulare filtern
       </h1>
     </template>
-    <div style="padding: 10px;">
+    <div style="padding: 20px;">
       Zeige Anreicherungen aus den folgenden Vokabularen:
       <template 
         v-for="scheme in state.schemes"
@@ -629,7 +629,7 @@ const examples = [
         Mappingtypen filtern
       </h1>
     </template>
-    <div style="padding: 10px;">
+    <div style="padding: 20px;">
       Zeige Anreicherungen basierend auf folgenden Mappingtypen:
       <template 
         v-for="type in jskos.mappingTypes"
