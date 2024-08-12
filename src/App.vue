@@ -49,7 +49,7 @@ const mappingTypePriority = [
 ]
 
 const suggestions = computed(() => state.suggestions.filter(
-  suggestion => suggestionSchemes[suggestion.target.inScheme[0].uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length,
+  suggestion => suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length,
 ).sort((a, b) => {
   const aMappings = a.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
   const bMappings = b.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
@@ -73,8 +73,8 @@ const selectedSuggestionsPica = computed(() => {
   if (!filteredSuggestions.length) {
     return null
   }
-  return `  003@ $0${state.ppn}\n` + filteredSuggestions.map(({ target, mappings }) => {
-    let pica = `+ ${target.inScheme[0].PICA} `
+  return `  003@ $0${state.ppn}\n` + filteredSuggestions.map(({ target, scheme, mappings }) => {
+    let pica = `+ ${scheme.PICA} `
     pica += `$a${jskos.notation(target)}`
     pica += "$Acoli-conc"
     mappings.forEach(({ uri }) => {
@@ -306,6 +306,7 @@ watch(() => state.ppn, async (ppn) => {
     } else {
       suggestions.push({
         target,
+        scheme: target.inScheme[0],
         mappings: [mapping],
         selected: false,
       })
@@ -318,7 +319,7 @@ watch(() => state.ppn, async (ppn) => {
   // Load concept data for mappings
   console.time("Load concept data for mappings")
   state.loadingPhase = 4
-  const suggestionsGroupedByScheme = state.schemes.map(scheme => ({ scheme, concepts: suggestions.filter(({ target }) => jskos.compare(target.inScheme[0], scheme)).map(({ target }) => target) })).filter(group => group.concepts.length)
+  const suggestionsGroupedByScheme = state.schemes.map(scheme => ({ scheme, concepts: suggestions.filter(suggestion => jskos.compare(suggestion.scheme, scheme)).map(({ target }) => target) })).filter(group => group.concepts.length)
   // TODO: Fix code repetition from above
   await Promise.all(suggestionsGroupedByScheme.map(async ({ scheme, concepts: conceptsToLoad }) => {
     console.log(scheme, conceptsToLoad)
