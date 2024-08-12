@@ -260,7 +260,7 @@ watch(() => state.ppn, async (ppn) => {
       if (!scheme.API?.length || !scheme._registry) {
         return
       }
-      const concepts = await scheme._registry.getConcepts({ concepts: subjects.map(subject => ({ uri: subject.uri })) })
+      const concepts = await scheme._registry.getConcepts({ concepts: subjects.map(subject => ({ uri: subject.uri, inScheme: [scheme] })) })
       concepts.forEach(concept => {
         const subject = subjects.find(s => jskos.compare(s, concept))
         if (subject) {
@@ -343,7 +343,7 @@ watch(() => state.ppn, async (ppn) => {
     }
     let concepts
     try {
-      concepts = await scheme._registry.getConcepts({ concepts: conceptsToLoad.map(subject => ({ uri: subject.uri })) })
+      concepts = await scheme._registry.getConcepts({ concepts: conceptsToLoad.map(subject => ({ uri: subject.uri, inScheme: [scheme] })) })
     } catch (error) {
       console.warn(`Could not load concept data for ${jskos.notation(scheme)} concepts`, error)
       return []
