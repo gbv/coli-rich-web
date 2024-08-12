@@ -91,7 +91,7 @@ const initPromise = (async () => {
   state.loading = false
   // Set suggestion schemes, including reading from/writing to local storage
   for (const { uri } of schemes) {
-    const storageKey = `coli-rich-web_scheme-${uri}`, value = localStorage.getItem(storageKey)
+    const storageKey = `coli-rich-web_schemes-${uri}`, value = localStorage.getItem(storageKey)
     suggestionSchemes[uri] = value === "false" ? false : true
     watch(() => suggestionSchemes[uri], (value) => {
       localStorage.setItem(storageKey, value)
