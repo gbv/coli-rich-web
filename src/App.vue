@@ -524,7 +524,7 @@ const examples = [
                     v-for="mapping in mappings"
                     :key="mapping.uri"
                     :class="{
-                      suggestionFaded: !suggestionTypes[mapping.type[0]],
+                      faded: !suggestionTypes[mapping.type[0]],
                     }">
                     {{ jskos.notation(mapping.fromScheme) }}:
                     {{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}
@@ -667,7 +667,7 @@ header > h1 {
   margin: 0 10px;
   padding: 4px 20px;
 }
-.suggestionFaded {
+.faded {
   color: grey;
 }
 </style>
