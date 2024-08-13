@@ -39,6 +39,9 @@ const typeFilterShown = ref(false)
 const suggestionSchemes = reactive({})
 const suggestionTypes = reactive({})
 
+const showWhenExistsKey = "___SHOW_WHEN_EXISTS___"
+const filterSuggestionsForShowWhenExists = (suggestion) => !state.subjects.find(({ scheme, subjects }) => jskos.compare(suggestion.scheme, scheme) && subjects.length > 0)
+
 // TODO: Sorting is more complicated as mapping direction needs to be accounted for
 const mappingTypePriority = [
   "http://www.w3.org/2004/02/skos/core#exactMatch",
@@ -50,7 +53,7 @@ const mappingTypePriority = [
 ]
 
 const suggestions = computed(() => state.suggestions.filter(
-  suggestion => suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length,
+  suggestion => suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length && (suggestionSchemes[showWhenExistsKey] || filterSuggestionsForShowWhenExists(suggestion)),
 ).sort((a, b) => {
   const aMappings = a.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
   const bMappings = b.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
@@ -137,7 +140,7 @@ const initPromise = (async () => {
   state.schemes = schemes
   state.loading = false
   // Set suggestion schemes, including reading from/writing to local storage
-  for (const { uri } of schemes) {
+  for (const { uri } of schemes.concat({ uri: showWhenExistsKey })) {
     const storageKey = `coli-rich-web_schemes-${uri}`, value = localStorage.getItem(storageKey)
     suggestionSchemes[uri] = value === "false" ? false : true
     watch(() => suggestionSchemes[uri], (value) => {
@@ -676,6 +679,19 @@ const examples = [
           </label>
         </li>
       </ul>
+      <p>
+        <input
+          :id="`suggestionSchemes-${showWhenExistsKey}`"
+          v-model="suggestionSchemes[showWhenExistsKey]"
+          type="checkbox">
+        <label :for="`suggestionSchemes-${showWhenExistsKey}`">
+          Zeige Anreicherungen für Vokabulare mit existierender Sacherschließung ({{ state.suggestions.filter(suggestion => !filterSuggestionsForShowWhenExists(suggestion)).length }})
+        </label>
+        <br>
+        <small>
+          Wenn deaktiviert werden Anreicherungsvorschläge von Vokabularen, zu denen schon Sacherschließung auf dem Titel existiert, ausgeblendet.
+        </small>
+      </p>
     </div>
   </modal>
   <!-- Type filter modal -->
