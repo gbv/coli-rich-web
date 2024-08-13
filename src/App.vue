@@ -533,7 +533,7 @@ const examples = [
                   type="checkbox">
               </td>
               <td>{{ jskos.notation(target.inScheme[0]) }}</td>
-              <td>{{ jskos.notation(target) }} {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
+              <td><b>{{ jskos.notation(target) }}</b> {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
               <td>
                 <ul class="plainList">
                   <li
@@ -542,12 +542,12 @@ const examples = [
                     :class="{
                       faded: !suggestionTypes[mapping.type[0]],
                     }">
-                    {{ jskos.notation(mapping.fromScheme) }}:
-                    {{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}
+                    {{ jskos.notation(mapping.fromScheme) }}
+                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}</b>
                     {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
                     {{ jskos.notation(jskos.mappingTypeByUri(mapping.type[0])) }}
-                    {{ jskos.notation(mapping.toScheme) }}:
-                    {{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}
+                    {{ jskos.notation(mapping.toScheme) }}
+                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}</b>
                     {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "to")[0], { fallbackToUri: false }) }}
                     ({{ jskos.prefLabel(mapping.creator?.[0]) || "?" }}, {{ mapping.created?.slice(0, 4) || "?" }})
                     <a
