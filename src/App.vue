@@ -162,8 +162,9 @@ async function getMappingsForSubjects(subjects) {
   const 
     toScheme = state.schemes.map(s => s.uri).join("|"), 
     cardinality = "1-to-1",
-    configs = [], 
-    maxLength = 600 // Prevent URL length issues
+    configs = [],
+    limit = 500,
+    maxLength = 400 // Prevent URL length issues (very conservative value)
   let current = []
   
   for (const subject of subjects.concat(null)) {
@@ -177,6 +178,7 @@ async function getMappingsForSubjects(subjects) {
           toScheme,
           cardinality,
           direction,
+          limit,
         })
       })
     }
