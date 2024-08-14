@@ -314,12 +314,13 @@ watch(() => state.ppn, async (ppn) => {
   for (const mapping of mappings) {
     const targetSide = ["from", "to"].find(side => jskos.conceptsOfMapping(mapping, side).filter(concept => jskos.isContainedIn(concept, subjects)).length === 0)
     let target = jskos.conceptsOfMapping(mapping, targetSide)[0]
-    if (!target) {
+    const targetScheme = mapping[`${targetSide}Scheme`]
+    if (!target || !targetScheme) {
       continue
     }
     target = {
       ...target,
-      inScheme: [mapping[`${targetSide}Scheme`]],
+      inScheme: [targetScheme],
     }
     const existingSuggestion = suggestions.find(s => jskos.compare(s.target, target))
     if (existingSuggestion) {
@@ -327,7 +328,7 @@ watch(() => state.ppn, async (ppn) => {
     } else {
       suggestions.push({
         target,
-        scheme: target.inScheme[0],
+        scheme: targetScheme,
         mappings: [mapping],
         selected: false,
       })
