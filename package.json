@@ -23,18 +23,18 @@
     "node": ">=20"
   },
   "dependencies": {
-    "cocoda-sdk": "^3.4.10",
-    "jskos-tools": "^1.0.40",
-    "jskos-vue": "^0.3.14",
-    "vue": "^3.4.37"
+    "cocoda-sdk": "^3.4.12",
+    "jskos-tools": "^1.0.42",
+    "jskos-vue": "^0.3.16",
+    "vue": "^3.5.11"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.1.2",
+    "@vitejs/plugin-vue": "^5.1.4",
     "dotenv": "^16.4.5",
     "eslint": "~9.12",
     "eslint-config-gbv": "~2.2",
-    "lint-staged": "^15.2.8",
+    "lint-staged": "^15.2.10",
     "pre-commit": "^1.2.2",
-    "vite": "^5.4.0"
+    "vite": "^5.4.8"
   }
 }
