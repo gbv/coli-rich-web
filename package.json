@@ -1,7 +1,7 @@
 {
   "name": "coli-rich-web",
-  "private": true,
   "version": "0.0.0",
+  "description": "Web service for enriching subject indexing data on the basis of mappings.",
   "type": "module",
   "scripts": {
     "dev": "vite --port 3454",
