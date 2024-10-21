@@ -26,7 +26,6 @@ cd coli-rich-web
 npm ci
 ```
 
-## Usage
 To run the development server on port 3454:
 
 ```bash
@@ -39,8 +38,19 @@ To build the web app into the `dist/` directory:
 npm run build
 ```
 
+## Usage
+
+There is an input form to give a PPN from K10plus catalogue.
+
+- The PPN is looked up via **subjects API** to get a list of concepts, the record is indexed with (e.g. DDC Numbers, BK Notations...)
+- Each subject is then queried to get mappings from via **JSKOS API** and corresponding enrichments
+- Enrichments can be selected
+- *Writing selected enrichment back to K10plus has not been implemented yet*
+
 ## Configuration
 Currently not applicable, but will be relevant when a server component is added.
+
+
 
 ## To-Dos
 - [ ] Code cleanup
