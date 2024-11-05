@@ -412,11 +412,11 @@ const examples = [
       <!-- Empty div here to start the alternating section colors -->
       <div />
       <div class="section">
-        <h2>Semi-automatische Eintragung von Sacherschließungsdaten in PICA-Datenbanken</h2>
+        <h2>Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus</h2>
         <p>
-          Mit folgendem Formular können Titeldaten aus PICA-Datenbanken abgerufen werden, um diese mit Sacherschließungsdaten (auf Basis von coli-conc Mappings) anzureichern.
+          Mit folgendem Formular können Titeldaten aus dem K10plus abgerufen werden, um diese mit Sacherschließungsdaten (auf Basis von coli-conc Mappings) anzureichern.
         </p>
-        <p>Dieses Tool ist in Entwicklung und nur zur Demonstration. Aktuell ist keine Eintragung in die Datenbank möglich.</p>
+        <p>Dieses Tool ist in Entwicklung und nur zur Demonstration. Aktuell ist keine Eintragung in die PICA-Datenbank möglich.</p>
         <p>
           Titel laden
           <input
@@ -471,7 +471,11 @@ const examples = [
               <th style="max-width: 30%;">
                 PPN
               </th>
-              <td>{{ state.ppn }}</td>
+              <td>
+                <a
+                  target="_blank"
+                  :href="'https://kxp.k10plus.de/DB=2.1/CMD?ACT=SRCHM&IKT0=12&TRM0='+ state.ppn">{{ state.ppn }}</a>
+              </td>
             </tr>
             <tr>
               <th>Titel</th>
