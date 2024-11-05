@@ -112,7 +112,7 @@
 h2 {
   margin-bottom: 10px !important;
   font-size: 18px !important;
-  padding: 8px 30px !important;
+  padding-top: 18px !important;
 }
 
 .row {
@@ -151,4 +151,12 @@ h2 {
 }
 .row .jskos-vue-itemList > div {
   padding-left: 0;
+}
+table {
+  border-collapse: collapse;
+}
+thead tr th {
+  border-bottom: 2px solid #b13f13;
+  margin-bottom: 2px;
+  text-align: left;
 }
