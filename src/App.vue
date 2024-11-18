@@ -4,23 +4,15 @@ import { LoadingIndicator, Modal } from "jskos-vue"
 import { sortSuggestionMappings, suggestionsToPica } from "./utils.js"
 
 import * as jskos from "jskos-tools"
-import { cdk, addAllProviders } from "cocoda-sdk"
-addAllProviders()
-jskos.languagePreference.defaults = ["de", "en"]
 
 import { useUrlHandling } from "./composables/url-handling.js"
 const { updateUrl } = useUrlHandling()
 
-import { version, name, subjectsApi, bartocApi, concordanceApi, showWhenExistsKey, schemesKey, typesKey, examples } from "./config.js"
+import { useInit } from "./composables/init.js"
+// Run initialization immediately, then wait for the promise later
+const initPromise = useInit()
 
-const bartocRegistry = cdk.initializeRegistry({
-  provider: "ConceptApi",
-  api: bartocApi,
-})
-const concordanceRegistry = cdk.initializeRegistry({
-  provider: "MappingsApi",
-  api: concordanceApi,
-})
+import { version, name, subjectsApi, showWhenExistsKey, examples, concordanceRegistry } from "./config.js"
 
 const ppninput = ref("")
 
@@ -71,47 +63,6 @@ const selectAllSuggestions = computed({
     })
   },
 })
-
-const initPromise = (async () => {
-  console.time("Init")
-  // Initialize registries 
-  bartocRegistry.init()
-  concordanceRegistry.init()
-  // Load supported schemes from subjects-api
-  const schemes = (await (await fetch(`${subjectsApi}/voc`)).json()).filter(({ uri }) => uri)
-  const schemesFromBARTOC = await bartocRegistry.getSchemes({
-    params: {
-      uri: schemes.map(scheme => scheme.uri).join("|"),
-    },
-  })
-  // Merge properties from BARTOC schemes with subject-api schemes
-  schemesFromBARTOC.forEach(scheme => Object.getOwnPropertyNames(scheme).forEach(prop => {
-    const otherScheme = schemes.find(s => jskos.compare(s, scheme))
-    if (!otherScheme || otherScheme[prop]) {
-      return
-    }
-    otherScheme[prop] = scheme[prop]
-  }))
-  state.schemes = schemes
-  state.loading = false
-  // Set suggestion schemes, including reading from/writing to local storage
-  for (const { uri } of schemes.concat({ uri: showWhenExistsKey })) {
-    const storageKey = `${schemesKey}-${uri}`, value = localStorage.getItem(storageKey)
-    state.suggestionSchemes[uri] = value === "false" ? false : true
-    watch(() => state.suggestionSchemes[uri], (value) => {
-      localStorage.setItem(storageKey, value)
-    })
-  }
-  // Set suggestion types, including reading from/writing to local storage
-  for (const { uri } of jskos.mappingTypes) {
-    const storageKey = `${typesKey}-${uri}`, value = localStorage.getItem(storageKey)
-    state.suggestionTypes[uri] = value === "false" ? false : true
-    watch(() => state.suggestionTypes[uri], (value) => {
-      localStorage.setItem(storageKey, value)
-    })
-  }
-  console.timeEnd("Init")
-})()
 
 async function getMappingsForSubjects(subjects) {
   if (!subjects.length) {

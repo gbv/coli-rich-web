@@ -19,3 +19,17 @@ export const examples = [
   "1830228498",
   "1646529499",
 ]
+
+import * as jskos from "jskos-tools"
+import { cdk, addAllProviders } from "cocoda-sdk"
+addAllProviders()
+jskos.languagePreference.defaults = ["de", "en"]
+
+export const bartocRegistry = cdk.initializeRegistry({
+  provider: "ConceptApi",
+  api: bartocApi,
+})
+export const concordanceRegistry = cdk.initializeRegistry({
+  provider: "MappingsApi",
+  api: concordanceApi,
+})
