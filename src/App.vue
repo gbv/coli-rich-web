@@ -10,8 +10,7 @@ jskos.languagePreference.defaults = ["de", "en"]
 import { useUrlHandling } from "./composables/url-handling.js"
 const { updateUrl } = useUrlHandling()
 
-import config from "./config.js"
-const { version, name, subjectsApi, bartocApi, concordanceApi, showWhenExistsKey, schemesKey, typesKey, examples } = config
+import { version, name, subjectsApi, bartocApi, concordanceApi, showWhenExistsKey, schemesKey, typesKey, examples } from "./config.js"
 
 const bartocRegistry = cdk.initializeRegistry({
   provider: "ConceptApi",
