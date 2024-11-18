@@ -57,6 +57,11 @@ export async function getSubjects(ppn) {
   return subjects
 }
 
+async function runInParallelAndCombineResults(promises) {
+  return (await Promise.all(promises)).reduce((prev, cur) => prev.concat(cur), [])
+}
+const maxLength = 600 // Prevent URL length issues (very conservative value)
+
 export async function getMappingsForSubjects(subjects) {
   if (!subjects.length) {
     return []
@@ -65,8 +70,7 @@ export async function getMappingsForSubjects(subjects) {
     toScheme = state.schemes.map(s => s.uri).join("|"), 
     cardinality = "1-to-1",
     configs = [],
-    limit = 500,
-    maxLength = 600 // Prevent URL length issues (very conservative value)
+    limit = 500
   let current = []
   
   for (const subject of subjects.concat(null)) {
@@ -92,5 +96,19 @@ export async function getMappingsForSubjects(subjects) {
     }
     current.push(subject)
   }
-  return (await Promise.all(configs.map(config => concordanceRegistry.getMappings(config)))).reduce((prev, cur) => prev.concat(cur), [])
+  return runInParallelAndCombineResults(configs.map(config => concordanceRegistry.getMappings(config)))
+}
+
+export async function getConceptData({ concepts, scheme }) {
+  const promises = []
+  let current = []
+  for (const concept of concepts.concat(null)) {
+    const length = current.map(c => c.uri).join("|").length
+    if (length >= maxLength || (concept === null && current.length)) {
+      promises.push(scheme._registry.getConcepts({ concepts: current.map(concept => ({ uri: concept.uri, inScheme: [scheme] })) }))
+      current = []
+    }
+    current.push(concept)
+  }
+  return await runInParallelAndCombineResults(promises)
 }

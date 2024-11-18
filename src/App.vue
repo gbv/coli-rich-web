@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, computed } from "vue"
 import { LoadingIndicator, Modal } from "jskos-vue"
-import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects } from "./utils.js"
+import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "./utils.js"
 
 import * as jskos from "jskos-tools"
 
@@ -105,7 +105,7 @@ watch(() => state.ppn, async (ppn) => {
       if (!scheme.API?.length || !scheme._registry) {
         return
       }
-      const concepts = await scheme._registry.getConcepts({ concepts: subjects.map(subject => ({ uri: subject.uri, inScheme: [scheme] })) })
+      const concepts = await getConceptData({ concepts: subjects, scheme })
       concepts.forEach(concept => {
         const subject = subjects.find(s => jskos.compare(s, concept))
         if (subject) {
@@ -188,7 +188,7 @@ watch(() => state.ppn, async (ppn) => {
     }
     let concepts
     try {
-      concepts = await scheme._registry.getConcepts({ concepts: conceptsToLoad.map(subject => ({ uri: subject.uri, inScheme: [scheme] })) })
+      concepts = await getConceptData({ concepts: conceptsToLoad, scheme })
     } catch (error) {
       console.warn(`Could not load concept data for ${jskos.notation(scheme)} concepts`, error)
       return []
