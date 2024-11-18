@@ -74,6 +74,11 @@ export async function getMappingsForSubjects(subjects) {
     // Cutoff when maxLength is exceeded (or after last element)
     if (from.length >= maxLength || subject === null) {
       current = []
+      // This was originally a workaround for a bug in jskos-server.
+      // That bug (https://github.com/gbv/jskos-server/issues/219) is now fixed,
+      // however, there seem to be performance issues with direction=both, so we're keeping this for now.
+      // See: https://github.com/gbv/jskos-server/issues/221
+      // TODO: Adjust after performance issues are fixed.
       ;["forward", "backward"].forEach(direction => {
         configs.push({
           from,

@@ -123,7 +123,6 @@ watch(() => state.ppn, async (ppn) => {
   console.time("Load mappings")
   state.loadingPhase = 3
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
-  // TODO: This is currently a workaround for a suspected bug with direction=both
   const mappings = await getMappingsForSubjects(subjects)
   // TODO: This needs to be fixed in the data!
   const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
