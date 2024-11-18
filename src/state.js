@@ -9,4 +9,6 @@ export default reactive({
   subjects: [],
   mappings: [],
   suggestions: [],
+  suggestionSchemes: {},
+  suggestionTypes: {},
 })

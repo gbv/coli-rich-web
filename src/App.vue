@@ -1,6 +1,7 @@
 <script setup>
-import { ref, reactive, watch, computed } from "vue"
+import { ref, watch, computed } from "vue"
 import { LoadingIndicator, Modal } from "jskos-vue"
+import { sortSuggestionMappings, suggestionsToPica } from "./utils.js"
 
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
@@ -28,40 +29,11 @@ import state from "./state.js"
 const vocabularyFilterShown = ref(false)
 const typeFilterShown = ref(false)
 
-const suggestionSchemes = reactive({})
-const suggestionTypes = reactive({})
-
 const filterSuggestionsForShowWhenExists = (suggestion) => !state.subjects.find(({ scheme, subjects }) => jskos.compare(suggestion.scheme, scheme) && subjects.length > 0)
 
-// TODO: Sorting is more complicated as mapping direction needs to be accounted for
-const mappingTypePriority = [
-  "http://www.w3.org/2004/02/skos/core#exactMatch",
-  "http://www.w3.org/2004/02/skos/core#closeMatch",
-  "http://www.w3.org/2004/02/skos/core#broadMatch",
-  "http://www.w3.org/2004/02/skos/core#narrowMatch",
-  "http://www.w3.org/2004/02/skos/core#mappingRelation",
-  "http://www.w3.org/2004/02/skos/core#relatedMatch",
-]
-
 const suggestions = computed(() => state.suggestions.filter(
-  suggestion => suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => suggestionTypes[mapping.type[0]]).length && (suggestionSchemes[showWhenExistsKey] || filterSuggestionsForShowWhenExists(suggestion)),
-).sort((a, b) => {
-  const aMappings = a.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
-  const bMappings = b.mappings.filter(mapping => suggestionTypes[mapping.type[0]])
-  const aPriority = Math.min(...aMappings.map(mapping => {
-    const index = mappingTypePriority.indexOf(mapping.type[0])
-    return index === -1 ? 9 : index
-  }), 10)
-  const bPriority = Math.min(...bMappings.map(mapping => {
-    const index = mappingTypePriority.indexOf(mapping.type[0])
-    return index === -1 ? 9 : index
-  }), 10)
-  if (aPriority === bPriority) {
-    // Fallback to number of mappings
-    return bMappings.length - aMappings.length
-  }
-  return aPriority - bPriority
-}))
+  suggestion => state.suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]]).length && (state.suggestionSchemes[showWhenExistsKey] || filterSuggestionsForShowWhenExists(suggestion)),
+).sort(sortSuggestionMappings))
 
 const numberOfSuggestionsByScheme = computed(() => {
   const result = {}
@@ -83,15 +55,7 @@ const selectedSuggestionsPica = computed(() => {
   if (!filteredSuggestions.length) {
     return null
   }
-  return `  003@ $0${state.ppn}\n` + filteredSuggestions.map(({ target, scheme, mappings }) => {
-    let pica = `+ ${scheme.PICA} `
-    pica += `$a${jskos.notation(target)}`
-    pica += "$Acoli-conc"
-    mappings.forEach(({ uri }) => {
-      pica += `$A${uri}`
-    })
-    return pica
-  }).join("\n")
+  return suggestionsToPica({ suggestions: filteredSuggestions, ppn: state.ppn })
 })
 
 const selectAllSuggestions = computed({
@@ -133,16 +97,16 @@ const initPromise = (async () => {
   // Set suggestion schemes, including reading from/writing to local storage
   for (const { uri } of schemes.concat({ uri: showWhenExistsKey })) {
     const storageKey = `${schemesKey}-${uri}`, value = localStorage.getItem(storageKey)
-    suggestionSchemes[uri] = value === "false" ? false : true
-    watch(() => suggestionSchemes[uri], (value) => {
+    state.suggestionSchemes[uri] = value === "false" ? false : true
+    watch(() => state.suggestionSchemes[uri], (value) => {
       localStorage.setItem(storageKey, value)
     })
   }
   // Set suggestion types, including reading from/writing to local storage
   for (const { uri } of jskos.mappingTypes) {
     const storageKey = `${typesKey}-${uri}`, value = localStorage.getItem(storageKey)
-    suggestionTypes[uri] = value === "false" ? false : true
-    watch(() => suggestionTypes[uri], (value) => {
+    state.suggestionTypes[uri] = value === "false" ? false : true
+    watch(() => state.suggestionTypes[uri], (value) => {
       localStorage.setItem(storageKey, value)
     })
   }
@@ -254,7 +218,7 @@ watch(() => state.ppn, async (ppn) => {
     console.warn("The following mappings without a mapping type were loaded and need to be fixed:", mappingsWithoutType.map(m => m.uri))
   }
   mappingsWithoutType.forEach(mapping => {
-    mapping.type = ["http://www.w3.org/2004/02/skos/core#mappingRelation"]
+    mapping.type = [jskos.defaultMappingType.uri]
   })
   // Supplement mappings with scheme data (including determining notations)
   mappings.forEach(mapping => {
@@ -506,7 +470,7 @@ function submitEnrichments() {
                     v-for="mapping in mappings"
                     :key="mapping.uri"
                     :class="{
-                      faded: !suggestionTypes[mapping.type[0]],
+                      faded: !state.suggestionTypes[mapping.type[0]],
                     }">
                     {{ jskos.notation(mapping.fromScheme) }}
                     <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}</b>
@@ -600,7 +564,7 @@ function submitEnrichments() {
           <a
             href=""
             @click.prevent="state.schemes.forEach(({ uri }) => {
-              suggestionSchemes[uri] = true
+              state.suggestionSchemes[uri] = true
             })">
             alle aktivieren
           </a>
@@ -608,7 +572,7 @@ function submitEnrichments() {
           <a
             href=""
             @click.prevent="state.schemes.forEach(({ uri }) => {
-              suggestionSchemes[uri] = false
+              state.suggestionSchemes[uri] = false
             })">
             alle deaktivieren
           </a>
@@ -631,21 +595,21 @@ function submitEnrichments() {
             faded: numberOfSuggestionsByScheme[scheme.uri] === 0,
           }">
           <input
-            :id="`suggestionSchemes-${scheme.uri}`"
-            v-model="suggestionSchemes[scheme.uri]"
+            :id="`state.suggestionSchemes-${scheme.uri}`"
+            v-model="state.suggestionSchemes[scheme.uri]"
             type="checkbox">
           <label
-            :for="`suggestionSchemes-${scheme.uri}`">
+            :for="`state.suggestionSchemes-${scheme.uri}`">
             {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByScheme[scheme.uri] }})
           </label>
         </li>
       </ul>
       <p>
         <input
-          :id="`suggestionSchemes-${showWhenExistsKey}`"
-          v-model="suggestionSchemes[showWhenExistsKey]"
+          :id="`state.suggestionSchemes-${showWhenExistsKey}`"
+          v-model="state.suggestionSchemes[showWhenExistsKey]"
           type="checkbox">
-        <label :for="`suggestionSchemes-${showWhenExistsKey}`">
+        <label :for="`state.suggestionSchemes-${showWhenExistsKey}`">
           Zeige Anreicherungen für Vokabulare mit existierender Sacherschließung ({{ state.suggestions.filter(suggestion => !filterSuggestionsForShowWhenExists(suggestion)).length }})
         </label>
         <br>
@@ -671,7 +635,7 @@ function submitEnrichments() {
           <a
             href=""
             @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
-              suggestionTypes[uri] = true
+              state.suggestionTypes[uri] = true
             })">
             alle aktivieren
           </a>
@@ -679,7 +643,7 @@ function submitEnrichments() {
           <a
             href=""
             @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
-              suggestionTypes[uri] = false
+              state.suggestionTypes[uri] = false
             })">
             alle deaktivieren
           </a>
@@ -702,11 +666,11 @@ function submitEnrichments() {
             faded: numberOfSuggestionsByType[type.uri] === 0,
           }">
           <input
-            :id="`suggestionTypes-${type.uri}`"
-            v-model="suggestionTypes[type.uri]"
+            :id="`state.suggestionTypes-${type.uri}`"
+            v-model="state.suggestionTypes[type.uri]"
             type="checkbox">
           <label
-            :for="`suggestionTypes-${type.uri}`">
+            :for="`state.suggestionTypes-${type.uri}`">
             {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByType[type.uri] }})
           </label>
         </li>
