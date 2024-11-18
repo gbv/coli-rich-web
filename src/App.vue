@@ -11,18 +11,17 @@ import { useUrlHandling } from "./composables/url-handling.js"
 const { updateUrl } = useUrlHandling()
 
 import config from "./config.js"
-const { version, name } = config
+const { version, name, subjectsApi, bartocApi, concordanceApi, showWhenExistsKey, schemesKey, typesKey, examples } = config
 
 const bartocRegistry = cdk.initializeRegistry({
   provider: "ConceptApi",
-  api: "https://bartoc.org/api/",
+  api: bartocApi,
 })
 const concordanceRegistry = cdk.initializeRegistry({
   provider: "MappingsApi",
-  api: "https://coli-conc.gbv.de/api/",
+  api: concordanceApi,
 })
 
-const subjectsApi = "https://coli-conc.gbv.de/subjects-k10plus"
 const ppninput = ref("")
 
 import state from "./state.js"
@@ -33,7 +32,6 @@ const typeFilterShown = ref(false)
 const suggestionSchemes = reactive({})
 const suggestionTypes = reactive({})
 
-const showWhenExistsKey = "___SHOW_WHEN_EXISTS___"
 const filterSuggestionsForShowWhenExists = (suggestion) => !state.subjects.find(({ scheme, subjects }) => jskos.compare(suggestion.scheme, scheme) && subjects.length > 0)
 
 // TODO: Sorting is more complicated as mapping direction needs to be accounted for
@@ -135,7 +133,7 @@ const initPromise = (async () => {
   state.loading = false
   // Set suggestion schemes, including reading from/writing to local storage
   for (const { uri } of schemes.concat({ uri: showWhenExistsKey })) {
-    const storageKey = `coli-rich-web_schemes-${uri}`, value = localStorage.getItem(storageKey)
+    const storageKey = `${schemesKey}-${uri}`, value = localStorage.getItem(storageKey)
     suggestionSchemes[uri] = value === "false" ? false : true
     watch(() => suggestionSchemes[uri], (value) => {
       localStorage.setItem(storageKey, value)
@@ -143,7 +141,7 @@ const initPromise = (async () => {
   }
   // Set suggestion types, including reading from/writing to local storage
   for (const { uri } of jskos.mappingTypes) {
-    const storageKey = `coli-rich-web_types-${uri}`, value = localStorage.getItem(storageKey)
+    const storageKey = `${typesKey}-${uri}`, value = localStorage.getItem(storageKey)
     suggestionTypes[uri] = value === "false" ? false : true
     watch(() => suggestionTypes[uri], (value) => {
       localStorage.setItem(storageKey, value)
@@ -337,12 +335,6 @@ watch(() => state.ppn, async (ppn) => {
 function submitEnrichments() {
   alert("Funktion nicht implementiert.")
 }
-
-const examples = [
-  "389598534",
-  "1830228498",
-  "1646529499",
-]
 </script>
 
 <template>
