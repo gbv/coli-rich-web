@@ -21,17 +21,7 @@ const concordanceRegistry = cdk.initializeRegistry({
 const subjectsApi = "https://coli-conc.gbv.de/subjects-k10plus"
 const ppninput = ref("")
 
-const state = reactive({
-  schemes: [],
-  ppn: null,
-  loading: true,
-  loadingPhase: 0,
-  error: false,
-  titleName: "",
-  subjects: [],
-  mappings: [],
-  suggestions: [],
-})
+import state from "./state.js"
 
 const vocabularyFilterShown = ref(false)
 const typeFilterShown = ref(false)
