@@ -33,3 +33,8 @@ export const concordanceRegistry = cdk.initializeRegistry({
   provider: "MappingsApi",
   api: concordanceApi,
 })
+
+// eslint-disable-next-line no-undef
+const loginServer = LOGIN_SERVER || null
+export const loginServerUrl = loginServer && loginServer.replace(/https?:\/\//, "")
+export const loginServerSsl = loginServer && loginServer.startsWith("https://")

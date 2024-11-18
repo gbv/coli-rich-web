@@ -13,6 +13,7 @@ export default defineConfig({
   plugins: [vue()],
   define: {
     BASE: `"${base || ""}"`,
+    LOGIN_SERVER: `"${process.env.LOGIN || ""}"`,
   },
   resolve: {
     alias: {

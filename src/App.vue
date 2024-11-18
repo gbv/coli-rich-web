@@ -11,6 +11,9 @@ import { useInit } from "./composables/init.js"
 // Run initialization immediately, then wait for the promise later
 const initPromise = useInit()
 
+import { useLogin } from "./composables/login.js"
+const { loginConfigured } = useLogin()
+
 import { version, name, showWhenExistsKey, examples } from "./config.js"
 
 const ppninput = ref("")
@@ -235,6 +238,9 @@ function submitEnrichments() {
             title="Go to coli-conc website">
             ⬅ zurück zur coli-conc Webseite
           </a>
+        </li>
+        <li v-if="loginConfigured">
+          <user-status />
         </li>
       </ul>
       <div style="clear:both" />
@@ -607,5 +613,18 @@ header > h1 {
 }
 .faded {
   color: grey;
+}
+/* UserStatus style fixes */
+.user-status {
+  z-index: 9999;
+}
+.user-status > a {
+  font-size: initial;
+}
+header .user-status li {
+  float: none;
+}
+header .user-status li a {
+  text-align: left;
 }
 </style>
