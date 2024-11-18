@@ -66,13 +66,14 @@ export async function getMappingsForSubjects(subjects) {
     cardinality = "1-to-1",
     configs = [],
     limit = 500,
-    maxLength = 400 // Prevent URL length issues (very conservative value)
+    maxLength = 600 // Prevent URL length issues (very conservative value)
   let current = []
   
   for (const subject of subjects.concat(null)) {
     const from = current.map(s => s.uri).join("|")
+    const length = toScheme.length + from.length
     // Cutoff when maxLength is exceeded (or after last element)
-    if (from.length >= maxLength || subject === null) {
+    if (length >= maxLength || (subject === null && from.length)) {
       current = []
       // This was originally a workaround for a bug in jskos-server.
       // That bug (https://github.com/gbv/jskos-server/issues/219) is now fixed,
