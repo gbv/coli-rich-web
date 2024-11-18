@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch, computed } from "vue"
-import { LoadingIndicator, Modal } from "jskos-vue"
 import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "./utils.js"
 
 import * as jskos from "jskos-tools"

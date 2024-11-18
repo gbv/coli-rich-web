@@ -1,7 +1,12 @@
 import { createApp } from "vue"
 import App from "./App.vue"
+const app = createApp(App)
 
 import "@/style.css"
 import "jskos-vue/dist/style.css"
 
-createApp(App).mount("#app")
+import { LoadingIndicator, Modal } from "jskos-vue"
+app.use(LoadingIndicator)
+app.use(Modal)
+
+app.mount("#app")
