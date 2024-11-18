@@ -1,3 +1,4 @@
+import { subjectsApi, concordanceRegistry } from "./config.js"
 import state from "./state.js"
 import * as jskos from "jskos-tools"
 
@@ -39,4 +40,51 @@ export function suggestionsToPica({ suggestions, ppn }) {
     })
     return pica
   }).join("\n")
+}
+
+export async function getTitleName(ppn) {
+  return (await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json())[1][0]
+}
+
+export async function getSubjects(ppn) {
+  let subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/opac-de-627:ppn:${ppn}&live=1`)).json()
+  // Filter duplicate subjects
+  subjects = [...new Set(subjects.map(s => s.uri))].map(uri_ => subjects.find(({ uri }) => uri === uri_))
+  // Add scheme data to subjects
+  subjects.forEach(subject => {
+    subject.inScheme[0] = state.schemes.find(scheme => jskos.compare(scheme, subject.inScheme[0]))
+  })
+  return subjects
+}
+
+export async function getMappingsForSubjects(subjects) {
+  if (!subjects.length) {
+    return []
+  }
+  const 
+    toScheme = state.schemes.map(s => s.uri).join("|"), 
+    cardinality = "1-to-1",
+    configs = [],
+    limit = 500,
+    maxLength = 400 // Prevent URL length issues (very conservative value)
+  let current = []
+  
+  for (const subject of subjects.concat(null)) {
+    const from = current.map(s => s.uri).join("|")
+    // Cutoff when maxLength is exceeded (or after last element)
+    if (from.length >= maxLength || subject === null) {
+      current = []
+      ;["forward", "backward"].forEach(direction => {
+        configs.push({
+          from,
+          toScheme,
+          cardinality,
+          direction,
+          limit,
+        })
+      })
+    }
+    current.push(subject)
+  }
+  return (await Promise.all(configs.map(config => concordanceRegistry.getMappings(config)))).reduce((prev, cur) => prev.concat(cur), [])
 }

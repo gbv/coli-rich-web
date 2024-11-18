@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch, computed } from "vue"
 import { LoadingIndicator, Modal } from "jskos-vue"
-import { sortSuggestionMappings, suggestionsToPica } from "./utils.js"
+import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects } from "./utils.js"
 
 import * as jskos from "jskos-tools"
 
@@ -12,7 +12,7 @@ import { useInit } from "./composables/init.js"
 // Run initialization immediately, then wait for the promise later
 const initPromise = useInit()
 
-import { version, name, subjectsApi, showWhenExistsKey, examples, concordanceRegistry } from "./config.js"
+import { version, name, showWhenExistsKey, examples } from "./config.js"
 
 const ppninput = ref("")
 
@@ -64,38 +64,6 @@ const selectAllSuggestions = computed({
   },
 })
 
-async function getMappingsForSubjects(subjects) {
-  if (!subjects.length) {
-    return []
-  }
-  const 
-    toScheme = state.schemes.map(s => s.uri).join("|"), 
-    cardinality = "1-to-1",
-    configs = [],
-    limit = 500,
-    maxLength = 400 // Prevent URL length issues (very conservative value)
-  let current = []
-  
-  for (const subject of subjects.concat(null)) {
-    const from = current.map(s => s.uri).join("|")
-    // Cutoff when maxLength is exceeded (or after last element)
-    if (from.length >= maxLength || subject === null) {
-      current = []
-      ;["forward", "backward"].forEach(direction => {
-        configs.push({
-          from,
-          toScheme,
-          cardinality,
-          direction,
-          limit,
-        })
-      })
-    }
-    current.push(subject)
-  }
-  return (await Promise.all(configs.map(config => concordanceRegistry.getMappings(config)))).reduce((prev, cur) => prev.concat(cur), [])
-}
-
 watch(() => state.ppn, async (ppn) => {
   await initPromise
   console.log(`Load PPN ${ppn}`)
@@ -115,15 +83,9 @@ watch(() => state.ppn, async (ppn) => {
   console.time("Load title data")
   state.loadingPhase = 1
   try {
-    const cslResult = await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json()
-    state.titleName = cslResult[1][0]
-    let subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/opac-de-627:ppn:${ppn}&live=1`)).json()
-    // Filter duplicate subjects
-    subjects = [...new Set(subjects.map(s => s.uri))].map(uri_ => subjects.find(({ uri }) => uri === uri_))
-    // Add scheme data to subjects
-    subjects.forEach(subject => {
-      subject.inScheme[0] = state.schemes.find(scheme => jskos.compare(scheme, subject.inScheme[0]))
-    })
+    state.titleName = await getTitleName(ppn)
+    const subjects = await getSubjects(ppn)
+    // Save subjects grouped by scheme
     state.subjects = state.schemes.map(scheme => ({ scheme, subjects: subjects.filter(s => jskos.compare(s.inScheme[0], scheme)) })).filter(group => group.subjects.length)
   } catch (error) {
     console.error(error)
