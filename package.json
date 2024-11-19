@@ -9,16 +9,14 @@
     "preview": "vite preview",
     "lint": "eslint",
     "fix": "eslint --fix",
-    "lint-staged": "lint-staged"
+    "lint-staged": "lint-staged",
+    "prepare": "node .husky/install.mjs"
   },
   "lint-staged": {
     "**/*.{js,vue}": [
       "eslint --fix"
     ]
   },
-  "pre-commit": [
-    "lint-staged"
-  ],
   "engines": {
     "node": ">=20"
   },
@@ -34,8 +32,8 @@
     "dotenv": "^16.4.5",
     "eslint": "~9.12",
     "eslint-config-gbv": "~2.2",
+    "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
-    "pre-commit": "^1.2.2",
     "vite": "^5.4.8"
   }
 }
