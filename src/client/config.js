@@ -1,5 +1,5 @@
 // Vite supports JSON import without assertions
-import pkg from "../package.json"
+import pkg from "#/package.json"
 const { name, version, description } = pkg
 
 export {
