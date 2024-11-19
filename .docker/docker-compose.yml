@@ -8,6 +8,8 @@ services:
       - ./data:/usr/src/app/dist
     environment:
       - BASE=/
+      - PORT=3454
+      - VITE_LOGIN_SERVER=http://localhost:3004
     ports:
-      - 3454:80
+      - 3454:3454
     restart: unless-stopped

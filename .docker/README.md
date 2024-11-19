@@ -1,6 +1,17 @@
 # coli-rich-web Docker
 
-Create a `docker-compose.yml` file:
+## Supported Architectures
+Currently, only `x86-64` is supported.
+
+<!-- ## Available Tags
+- The current release version is available under `latest`. However, new major versions might break compatibility of the previously used config file, therefore it is recommended to use a version tag instead.
+- We follow SemVer for versioning the application. Therefore, `x` offers the latest image for the major version x, `x.y` offers the latest image for the minor version x.y, and `x.y.z` offers the image for a specific patch version x.y.z.
+- Additionally, the latest development version is available under `dev`. -->
+
+## Usage
+It is recommended to run the image using [Docker Compose](https://docs.docker.com/compose/). Note that depending on your system, it might be necessary to use `sudo docker compose`. For older Docker versions, use `docker-compose` instead of `docker compose`.
+
+1. Create a `docker-compose.yml` file:
 
 ```yml
 services:
@@ -10,32 +21,28 @@ services:
       # Store the built site in a volume (optional, but prevents having to rebuild the site if the container is recreated)
       - ./data:/usr/src/app/dist
     environment:
-      # Base for URL (e.g. when not running under root of domain)
+      # See main README for explanation of configuration options
       - BASE=/
-    # Internal port can be changed via environment variable PORT
+      - PORT=3454
+      # When used in Docker, this needs to be a publicly available URL
+      - VITE_LOGIN_SERVER=http://localhost:3004
     ports:
-      - 80:80
+      - 3454:3454
     restart: unless-stopped
 ```
 
-Start the container:
+2. Start the container:
 
 ```sh
 docker compose up -d
 ```
 
-The app needs to be built after each update, as it is dependent on <!-- the specified environment variables and --> the Git commit. This update and build will be run in the background (if needed) each time the container is started.
+This will create and start a coli-rich-web container running under host (and guest) port 3454. See [Configuration](#configuration) on how to configure it.
 
-To run the update manually without restarting the container (should be zero downtime):
+You can now access the application under `http://localhost:3454`.
 
-```sh
-docker compose exec -it coli-rich-web bash build.sh
-```
+## Application Setup
+After changing `docker-compose.yml` (e.g. adjusting environment variables), it is necessary to recreate the container to apply changes: `docker compose up -d`
 
-Note that the container will clone the `main` branch of the site on first launch, then update the site via Git each time `build.sh` is run or the container is restarted.
-
-The app will be served on port 80.
-
-## Publishing the Docker Image
-
-For maintainers: As the site within the container uses Git to keep itself updated, updates to the published image won't be necessary unless there are changes to the image itself (`Dockerfile` or any of the Docker-related scripts). The Docker workflow on GitHub will therefore only build and publish a new image when necessary.
+### Configuration
+You can use environment variables via `environment` to configure coli-rich-web. Please refer to the [main documentation](../README.md#configuration) for more information and all available options.

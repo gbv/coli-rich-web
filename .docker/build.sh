@@ -1,28 +1,16 @@
 #!/bin/bash
 
-# Clone site if not yet done
-if [ ! -e .git ]; then
-  git init -b main
-  git remote add origin https://github.com/gbv/coli-rich-web.git
-  git fetch
-  git checkout -t origin/main
-fi
+# We need to rebuild the front-end if environment differs from default
 
-# Pull changes
-git pull
+base_file=dist/.base
+base="$BASE /// $VITE_LOGIN_SERVER"
 
-env () {
-  echo "$(git rev-parse HEAD) ### $BASE"
-}
-env_file=dist/.build-env
-
-if [ -e $env_file ] && [ "$(env)" == "$(cat $env_file)" ]; then
-  echo "Site rebuild skipped because there was no update."
+if [[ -e $base_file && "$base" == "$(cat $base_file)" ]]; then
+  echo "Front-end rebuild skipped."
 else
-  # Might need to update dependencies after each pull
-  npm ci
+  echo "Rebuilding front-end because configuration changed..."
   # Build the site
   npm run build
-  # Remember the current commit
-  env > $env_file
+  # Remember the current environment
+  echo "$base" > $base_file
 fi

@@ -1,13 +1,19 @@
 name: Publish Docker
-# Only run when Docker-related files are changed
 on:
   push:
     branches:
       - main
-    paths:
-      - .docker/Dockerfile
-      - .docker/entrypoint.sh
-      - .docker/build.sh
+      - dev
+    tags:
+      - v*
+    paths-ignore:
+      - '**.md'
+      - '.github/**'
+      - '.husky/**'
+      - '.vscode/**'
+      - jsconfig.json
+      - .gitignore
+      - '.eslint**'
 
 # Adapted from:
 # - https://github.com/docker/metadata-action#semver
@@ -30,6 +36,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # TODO: Adjust this as soon as we have semver
           tags: |
             type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
       -

@@ -1,18 +1,24 @@
 FROM node:20-alpine
 WORKDIR /usr/src/app
 
-## We need bash and git
 RUN apk add --no-cache bash
-RUN apk add --no-cache git
 
-## Show version numbers for Node and npm
-RUN node -v
-RUN npm -v
+# Copy and install dependencies
+COPY package*.json ./
+RUN npm ci
+
+# Bundle app source
+COPY . .
+
+# Use pm2 to run app
+RUN npm i -g pm2
+
+ENV NODE_ENV=production
 
 ## Make Docker-related scripts available in root folder
 COPY .docker/*.sh .
 
-## Use http-server for serving the site
-RUN npm i -g http-server
+# Build Vue frontend for default configuration
+RUN bash ./build.sh
 
 CMD ["bash", "entrypoint.sh"]
