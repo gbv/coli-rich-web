@@ -1,4 +1,4 @@
-import state from "../state.js"
+import state from "@/state.js"
 import { onMounted, onUnmounted } from "vue"
 
 function initializeFromUrl() {

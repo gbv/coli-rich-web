@@ -1,5 +1,5 @@
-import { subjectsApi, showWhenExistsKey, schemesKey, typesKey, bartocRegistry, concordanceRegistry } from "../config.js"
-import state from "../state.js"
+import { subjectsApi, showWhenExistsKey, schemesKey, typesKey, bartocRegistry, concordanceRegistry } from "@/config.js"
+import state from "@/state.js"
 import * as jskos from "jskos-tools"
 import { watch } from "vue"
 

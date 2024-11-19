@@ -1,24 +1,24 @@
 <script setup>
 import { ref, watch, computed } from "vue"
-import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "./utils.js"
+import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "@/utils.js"
 
 import * as jskos from "jskos-tools"
 
-import { useUrlHandling } from "./composables/url-handling.js"
+import { useUrlHandling } from "@/composables/url-handling.js"
 const { updateUrl } = useUrlHandling()
 
-import { useInit } from "./composables/init.js"
+import { useInit } from "@/composables/init.js"
 // Run initialization immediately, then wait for the promise later
 const initPromise = useInit()
 
-import { useLogin } from "./composables/login.js"
+import { useLogin } from "@/composables/login.js"
 const { loginConfigured } = useLogin()
 
-import { version, name, showWhenExistsKey, examples } from "./config.js"
+import { version, name, showWhenExistsKey, examples } from "@/config.js"
 
 const ppninput = ref("")
 
-import state from "./state.js"
+import state from "@/state.js"
 
 const vocabularyFilterShown = ref(false)
 const typeFilterShown = ref(false)

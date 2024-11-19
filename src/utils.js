@@ -1,5 +1,5 @@
-import { subjectsApi, concordanceRegistry } from "./config.js"
-import state from "./state.js"
+import { subjectsApi, concordanceRegistry } from "@/config.js"
+import state from "@/state.js"
 import * as jskos from "jskos-tools"
 
 // TODO: Sorting is more complicated as mapping direction needs to be accounted for
