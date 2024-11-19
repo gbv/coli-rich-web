@@ -2,8 +2,7 @@ import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
 import { fileURLToPath } from "url"
 
-const base = process.env.BASE || "/"
-const isProduction = process.env.NODE_ENV === "production"
+import config from "./src/config.js"
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -15,5 +14,5 @@ export default defineConfig({
     },
   },
   // Use base / for everything other than production
-  base: isProduction ? base : "/",
+  base: config.isProduction ? config.base : "/",
 })

@@ -32,10 +32,11 @@ To run the development server on port 3454:
 npm run dev
 ```
 
-To build the web app into the `dist/` directory:
+To run the production server, you need to build the Vue.js frondend first, then start the server:
 
 ```bash
 npm run build
+npm run start
 ```
 
 ## Usage
