@@ -11,7 +11,7 @@ if (NODE_ENV !== "test") {
 const { env } = process
 
 let login = env.VITE_LOGIN_SERVER
-if (!login.endsWith("/")) {
+if (login && !login.endsWith("/")) {
   login += "/"
 }
 
