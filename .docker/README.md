@@ -26,6 +26,7 @@ services:
       - PORT=3454
       # When used in Docker, this needs to be a publicly available URL
       - VITE_LOGIN_SERVER=http://localhost:3004
+      - VITE_ALLOWED_USERS=uri1,uri2
     ports:
       - 3454:3454
     restart: unless-stopped

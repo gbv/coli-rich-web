@@ -37,3 +37,5 @@ export const concordanceRegistry = cdk.initializeRegistry({
 const loginServer = import.meta.env.VITE_LOGIN_SERVER || null
 export const loginServerUrl = loginServer && loginServer.replace(/https?:\/\//, "")
 export const loginServerSsl = loginServer && loginServer.startsWith("https://")
+
+export const allowedUsers = (import.meta.env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())

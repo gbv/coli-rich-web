@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed } from "vue"
+import { ref, watch, computed, inject } from "vue"
 import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "@/utils.js"
 
 import * as jskos from "jskos-tools"
@@ -13,8 +13,11 @@ const initPromise = useInit()
 
 import { useLogin } from "@/composables/login.js"
 const { loginConfigured } = useLogin()
+const { loggedIn, user } = inject("login-refs")
 
-import { version, name, showWhenExistsKey, examples } from "@/config.js"
+import { version, name, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
+
+const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri))
 
 const ppninput = ref("")
 
@@ -239,8 +242,31 @@ function submitEnrichments() {
             ⬅ zurück zur coli-conc Webseite
           </a>
         </li>
-        <li v-if="loginConfigured">
-          <user-status />
+        <li 
+          v-if="loginConfigured"
+          style="position: relative;">
+          <user-status>
+            <template
+              v-if="loggedIn"
+              #after>
+              <hr>
+              <p 
+                v-if="hasBackendAccess"
+                style="color: green;">
+                Schreibberechtigung ist vorhanden.
+              </p>
+              <p
+                v-else
+                style="color: red;">
+                Keine Schreibberechtigung.
+              </p>
+            </template>
+          </user-status>
+          <div 
+            v-if="!hasBackendAccess"
+            style="position: absolute; top: 0; right: 5px; z-index: 10000; color: red;">
+            ●
+          </div>
         </li>
       </ul>
       <div style="clear:both" />
@@ -426,12 +452,15 @@ function submitEnrichments() {
         <template v-if="state.ppn && state.loadingPhase > 4 && selectedSuggestionsPica">
           <h2>Ausgewählte Anreicherungen in PICA</h2>
           <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
-          <p>
+          <p v-if="hasBackendAccess">
             <button 
               class="button"
               @click="submitEnrichments">
               Auswahl in Datenbank eintragen
             </button>
+          </p>
+          <p v-else>
+            Keine Berechtigung zur Eintragung vorhanden.
           </p>
         </template>
       </div>

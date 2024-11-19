@@ -82,8 +82,12 @@ const auth = [
   }, 
   authPreparation, 
   (req, res, next) => {
-    // TODO: Check if user is authorized (by URI or provider)
-    next()
+    // TODO: Add provider check as alternative as soon as CBS login provider is configured in Login Server.
+    if (!config.allowedUsers.includes(req.user?.uri)) {
+      next(new ForbiddenAccessError("Access forbidden. User is not on the allowed list."))
+    } else {
+      next()
+    }
   },
 ]
 

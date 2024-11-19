@@ -53,10 +53,13 @@ There is an input form to give a PPN from K10plus catalogue.
 Configuration can be adjusted via a `.env` file. Variables prefixed with `VITE_` can be used in the client as well.
 
 ```env
+PORT=3454
 # Base path on which your app will be hosted
 BASE=/
 # Login Server instance base URL
 VITE_LOGIN_SERVER=http://localhost:3004
+# Hardcoded list of allow user URIs that can perform enrichments in the backend
+VITE_ALLOWED_USERS=uri1,uri2
 ```
 
 ## To-Dos

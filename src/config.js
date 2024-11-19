@@ -21,6 +21,7 @@ export default {
   base: env.BASE || "/",
   port: parseInt(env.PORT) || 3454,
   login,
+  allowedUsers: (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim()),
   // methods
   log,
   warn: logger("warn"),
