@@ -1,5 +1,6 @@
 import express from "express"
 import ViteExpress from "vite-express"
+import path from "node:path"
 
 import * as auth from "./auth.js"
 import * as errors from "./errors.js"
@@ -9,7 +10,7 @@ const app = express()
 ViteExpress.config({ mode: config.isProduction ? "production" : "development" })
 
 // TODO: Authenticated test endpoint, replace with actual enrichment endpoint
-app.get("/test", auth.main, (req, res) => {
+app.get(path.join(config.base, "/test"), auth.main, (req, res) => {
   res.json({ Hello: "World", uris: req.uris })
 })
 
@@ -28,5 +29,5 @@ app.use((error, req, res, next) => {
 })
 
 ViteExpress.listen(app, config.port, () => {
-  config.log(`coli-rich-web at http://localhost:${config.port} in ${config.env} mode...`)
+  config.log(`coli-rich-web at http://localhost:${config.port}${config.base} in ${config.env} mode...`)
 })
