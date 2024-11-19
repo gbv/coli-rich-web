@@ -48,9 +48,15 @@ There is an input form to give a PPN from K10plus catalogue.
 - *Writing selected enrichment back to K10plus has not been implemented yet*
 
 ## Configuration
-Currently not applicable, but will be relevant when a server component is added.
 
+Configuration can be adjusted via a `.env` file. Variables prefixed with `VITE_` can be used in the client as well.
 
+```env
+# Base path on which your app will be hosted
+BASE=/
+# Login Server instance base URL
+VITE_LOGIN_SERVER=http://localhost:3004
+```
 
 ## To-Dos
 - [ ] Code cleanup
