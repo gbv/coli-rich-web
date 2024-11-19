@@ -10,7 +10,7 @@
     "lint": "eslint",
     "fix": "eslint --fix",
     "lint-staged": "lint-staged",
-    "prepare": "node .husky/install.mjs"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "**/*.{js,vue}": [
