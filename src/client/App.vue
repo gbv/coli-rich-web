@@ -291,7 +291,7 @@ function submitEnrichments() {
             class="button"
             :disabled="state.loading || !ppninput"
             @click="state.ppn = ppninput">
-            Laden
+            <i-mdi-clipboard-search /> Laden
           </button>
           <span v-if="!state.loading">
             Beispiele:
@@ -337,7 +337,7 @@ function submitEnrichments() {
               <td>
                 <a
                   target="_blank"
-                  :href="'https://kxp.k10plus.de/DB=2.1/CMD?ACT=SRCHM&IKT0=12&TRM0='+ state.ppn">{{ state.ppn }}</a>
+                  :href="'https://kxp.k10plus.de/DB=2.1/CMD?ACT=SRCHM&IKT0=12&TRM0='+ state.ppn"><i-mdi-file /> {{ state.ppn }}</a>
               </td>
             </tr>
             <tr>
