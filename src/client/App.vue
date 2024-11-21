@@ -337,7 +337,7 @@ function submitEnrichments() {
               <td>
                 <a
                   target="_blank"
-                  :href="'https://kxp.k10plus.de/DB=2.1/CMD?ACT=SRCHM&IKT0=12&TRM0='+ state.ppn"><i-mdi-file /> {{ state.ppn }}</a>
+                  :href="'https://opac.k10plus.de/DB=2.299/PPNSET?PPN='+ state.ppn"><i-mdi-file /> {{ state.ppn }}</a>
               </td>
             </tr>
             <tr>
