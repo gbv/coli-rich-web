@@ -599,6 +599,15 @@ function submitEnrichments() {
             })">
             alle deaktivieren
           </a>
+          ·
+          <a 
+            href=""
+            title="Mapping-Typen < und = sind geeignet für die automatische Anreicherung"
+            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
+              state.suggestionTypes[uri] = (uri === 'http://www.w3.org/2004/02/skos/core#exactMatch' || uri === 'http://www.w3.org/2004/02/skos/core#narrowMatch') ? true : false
+            })">
+            nur ≤ aktivieren
+          </a>
         </li>
         <li 
           v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
