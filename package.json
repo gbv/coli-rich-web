@@ -33,13 +33,17 @@
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@iconify-json/mdi": "^1.2.0",
     "@vitejs/plugin-vue": "^5.2.0",
+    "@vue/compiler-sfc": "^3.5.13",
     "dotenv": "^16.4.5",
     "eslint": "~9.14",
     "eslint-config-gbv": "~2.4",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "nodemon": "^3.1.7",
+    "unplugin-icons": "^0.20.1",
+    "unplugin-vue-components": "^0.27.4",
     "vite": "^5.4.11"
   }
 }

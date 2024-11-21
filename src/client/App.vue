@@ -379,19 +379,25 @@ function submitEnrichments() {
                   v-model="selectAllSuggestions"
                   type="checkbox">
               </th>
-              <th>
+              <th style="white-space: nowrap;">
+                Vokabular
                 <a
                   href=""
                   @click.prevent="vocabularyFilterShown = true">
-                  Vokabular
+                  <i-mdi-filter-check
+                    v-if="Object.values(state.suggestionSchemes).findIndex(value => value === false) === -1" />
+                  <i-mdi-filter-minus v-else />
                 </a>
               </th>
               <th>Notation</th>
-              <th style="min-width: 50%;">
+              <th style="min-width: 50%; white-space: nowrap;">
+                Quellen
                 <a
                   href=""
                   @click.prevent="typeFilterShown = true">
-                  Quellen
+                  <i-mdi-filter-check
+                    v-if="Object.values(state.suggestionTypes).findIndex(value => value === false) === -1" />
+                  <i-mdi-filter-minus v-else />
                 </a>
               </th>
             </tr>
@@ -438,11 +444,11 @@ function submitEnrichments() {
             {{ state.suggestions.length }} Anreicherungen wurden herausgefiltert:
             <a
               href=""
-              @click.prevent="vocabularyFilterShown = true">Vokabular-Filter prüfen</a>
+              @click.prevent="vocabularyFilterShown = true">Vokabular-Filter prüfen <i-mdi-filter /></a>
             ·
             <a
               href=""
-              @click.prevent="typeFilterShown = true">Mapping-Typ-Filter prüfen</a>
+              @click.prevent="typeFilterShown = true">Mapping-Typ-Filter prüfen <i-mdi-filter /></a>
           </template>
         </p>
         <p v-else-if="state.loadingPhase === 3">
