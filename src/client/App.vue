@@ -47,12 +47,9 @@ const numberOfSuggestionsByType = computed(() => {
   return result
 })
 
+const selectedSuggestions = computed(() => suggestions.value.filter(({ selected }) => selected))
 const selectedSuggestionsPica = computed(() => {
-  const filteredSuggestions = suggestions.value.filter(({ selected }) => selected)
-  if (!filteredSuggestions.length) {
-    return null
-  }
-  return suggestionsToPica({ suggestions: filteredSuggestions, ppn: state.ppn })
+  return suggestionsToPica({ suggestions: selectedSuggestions.value, ppn: state.ppn })
 })
 
 const selectAllSuggestions = computed({
@@ -368,6 +365,25 @@ function submitEnrichments() {
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
+        <template v-if="state.ppn && state.loadingPhase > 4">
+          <p v-if="hasBackendAccess">
+            <button 
+              class="button"
+              :disabled="selectedSuggestions.length === 0"
+              @click="submitEnrichments">
+              {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
+            </button>
+          </p>
+          <p v-else>
+            Keine Berechtigung zur Eintragung vorhanden.
+          </p>
+          <details>
+            <summary style="user-select: none; cursor: pointer;">
+              Ausgewählte Anreicherungen in PICA
+            </summary>
+            <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
+          </details>
+        </template>
         <h2 v-if="state.ppn && state.loadingPhase >= 3">
           Mögliche Anreicherungen
         </h2>
@@ -455,20 +471,6 @@ function submitEnrichments() {
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
-        <template v-if="state.ppn && state.loadingPhase > 4 && selectedSuggestionsPica">
-          <h2>Ausgewählte Anreicherungen in PICA</h2>
-          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
-          <p v-if="hasBackendAccess">
-            <button 
-              class="button"
-              @click="submitEnrichments">
-              Auswahl in Datenbank eintragen
-            </button>
-          </p>
-          <p v-else>
-            Keine Berechtigung zur Eintragung vorhanden.
-          </p>
-        </template>
       </div>
     </main>
     <footer class="footer">
@@ -654,6 +656,13 @@ header > h1 {
 .button {
   margin: 0 10px;
   padding: 4px 20px;
+}
+/* TODO: This should probably be part of the base coli-conc.gbv.de style */
+.button:disabled {
+  background-color: grey;
+}
+.button:disabled:hover {
+  cursor: default;
 }
 .faded {
   color: grey;
