@@ -15,6 +15,9 @@ import { useLogin } from "@/composables/login.js"
 const { loginConfigured } = useLogin()
 const { loggedIn, user } = inject("login-refs")
 
+import { useGoToTop } from "./composables/go-to-top.js"
+const { showGoToTopButton, goToTop } = useGoToTop()
+
 import { version, name, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
 
 const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri))
@@ -215,6 +218,15 @@ function submitEnrichments() {
 </script>
 
 <template>
+  <div
+    v-if="showGoToTopButton"
+    class="goToTopButton">
+    <button 
+      class="button"
+      @click="goToTop">
+      nach oben <i-mdi-arrow-up-drop-circle />
+    </button>
+  </div>
   <div>
     <header class="header">
       <a
@@ -679,5 +691,12 @@ header .user-status li {
 }
 header .user-status li a {
   text-align: left;
+}
+.goToTopButton {
+  position: fixed;
+  bottom: 10px;
+  right: -10px;
+  font-size: 24px;
+  z-index: 1;
 }
 </style>
