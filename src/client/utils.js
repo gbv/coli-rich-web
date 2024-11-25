@@ -2,19 +2,37 @@ import { subjectsApi, concordanceRegistry } from "@/config.js"
 import state from "@/state.js"
 import * as jskos from "jskos-tools"
 
-// TODO: Sorting is more complicated as mapping direction needs to be accounted for
 const mappingTypePriority = [
   "http://www.w3.org/2004/02/skos/core#exactMatch",
   "http://www.w3.org/2004/02/skos/core#closeMatch",
-  "http://www.w3.org/2004/02/skos/core#broadMatch",
   "http://www.w3.org/2004/02/skos/core#narrowMatch",
+  "http://www.w3.org/2004/02/skos/core#broadMatch",
   "http://www.w3.org/2004/02/skos/core#mappingRelation",
   "http://www.w3.org/2004/02/skos/core#relatedMatch",
 ]
 
+// Method ONLY FOR SORTING that adjust the direction of a mapping so that the "target" is always on the "to" side.
+// This makes sure that the above "mappingTypePriority" list makes sense with regards to "narrowMatch" and "broadMatch".
+const adjustMappingDirection = (target) => (mapping) => {
+  const switchDirections = jskos.compare(jskos.conceptsOfMapping(mapping, "from")[0], target)
+  let newType = mapping.type[0]
+  if (switchDirections && newType === "http://www.w3.org/2004/02/skos/core#narrowMatch") {
+    newType = "http://www.w3.org/2004/02/skos/core#broadMatch"
+  } else if (switchDirections && newType === "http://www.w3.org/2004/02/skos/core#broadMatch") {
+    newType = "http://www.w3.org/2004/02/skos/core#narrowMatch"
+  }
+  const newMapping = {
+    ...mapping,
+    [switchDirections ? "to" : "from"]: mapping.from,
+    [switchDirections ? "from" : "to"]: mapping.to,
+    type: [newType],
+  }
+  return newMapping
+}
+
 export function sortSuggestionMappings(a, b) {
-  const aMappings = a.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]])
-  const bMappings = b.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]])
+  const aMappings = a.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]]).map(adjustMappingDirection(a.target))
+  const bMappings = b.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]]).map(adjustMappingDirection(b.target))
   const aPriority = Math.min(...aMappings.map(mapping => {
     const index = mappingTypePriority.indexOf(mapping.type[0])
     return index === -1 ? 9 : index
