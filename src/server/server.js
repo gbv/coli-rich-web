@@ -6,6 +6,8 @@ import * as auth from "./auth.js"
 import * as errors from "./errors.js"
 import config from "../config.js"
 
+import * as jskos from "jskos-tools"
+
 const app = express()
 ViteExpress.config({ mode: config.isProduction ? "production" : "development" })
 
@@ -18,10 +20,18 @@ app.get(path.join(config.base, "/test"), auth.main, (req, res) => {
 app.use((error, req, res, next) => {
   // Check if error is defined in errors
   if (Object.values(errors).includes(error.constructor)) {
+    // Return message as language map prefLabel if possible
+    let prefLabel = error.prefLabel, message = error.message
+    if (typeof prefLabel !== "object" || !prefLabel) {
+      prefLabel = { "-": prefLabel || "" }
+    } else {
+      message = jskos.prefLabel({ prefLabel })
+    }
     res.status(error.statusCode).send({
       error: error.constructor.name,
       status: error.statusCode,
-      message: error.message,
+      message,
+      prefLabel,
     })
   } else {
     next(error)
