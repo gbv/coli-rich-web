@@ -13,12 +13,12 @@ const initPromise = useInit()
 
 import { useLogin } from "@/composables/login.js"
 const { loginConfigured } = useLogin()
-const { loggedIn, user } = inject("login-refs")
+const { loggedIn, user, token } = inject("login-refs")
 
 import { useGoToTop } from "./composables/go-to-top.js"
 const { showGoToTopButton, goToTop } = useGoToTop()
 
-import { version, name, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
+import { version, name, baseUrl, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
 
 const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri))
 
@@ -212,8 +212,27 @@ watch(() => state.ppn, async (ppn) => {
   console.timeEnd(`Load PPN ${ppn}`)
 })
 
-function submitEnrichments() {
-  alert("Funktion nicht implementiert.")
+async function submitEnrichments(ppn, suggestions) {
+  const pica = suggestionsToPica({ ppn, suggestions })
+  const options = {
+    method: "post",
+    headers: token ? {
+      Authorization: `Bearer ${token.value}`,
+    } : {},
+    body: pica,
+  }
+  // TODO: Improve error handling further.
+  try {
+    const response = await fetch(baseUrl + "submit", options)
+    const data = await response.json()
+    if (response.status === 201) {
+      alert("Success")
+    } else {
+      alert(`${data.error}: ${jskos.prefLabel(data) || data.message}`)
+    }
+  } catch (error) {
+    alert(`${error.name}: ${error.message}`)
+  }
 }
 </script>
 
@@ -382,7 +401,7 @@ function submitEnrichments() {
             <button 
               class="button"
               :disabled="selectedSuggestions.length === 0"
-              @click="submitEnrichments">
+              @click="submitEnrichments(state.ppn, selectedSuggestions)">
               {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
             </button>
           </p>
