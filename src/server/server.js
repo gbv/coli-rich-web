@@ -11,9 +11,16 @@ import * as jskos from "jskos-tools"
 const app = express()
 ViteExpress.config({ mode: config.isProduction ? "production" : "development" })
 
+// BodyParser
+import bodyParser from "body-parser"
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.text())
+
 // TODO: Authenticated test endpoint, replace with actual enrichment endpoint
-app.get(path.join(config.base, "/test"), auth.main, (req, res) => {
-  res.json({ Hello: "World", uris: req.uris })
+app.post(path.join(config.base, "/submit"), auth.main, (req) => {
+  // PICA data in req.body
+  config.log(req.body)
+  throw new errors.NotImplementedError()
 })
 
 // Error handling
