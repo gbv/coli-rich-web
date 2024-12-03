@@ -383,7 +383,7 @@ watch(() => state.ppn, async (ppn) => {
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
-        <template v-if="state.ppn && state.loadingPhase > 4">
+        <template v-if="state.ppn && state.loadingPhase > 3">
           <p v-if="hasBackendAccess">
             <button 
               class="button"
