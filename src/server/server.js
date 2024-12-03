@@ -37,5 +37,5 @@ app.use((error, req, res, _next) => {
 })
 
 ViteExpress.listen(app, config.port, () => {
-  config.log(`coli-rich-web at http://localhost:${config.port}${config.base} in ${config.env} mode...`)
+  config.log(`coli-rich-web at ${config.baseUrl} in ${config.env} mode...`)
 })

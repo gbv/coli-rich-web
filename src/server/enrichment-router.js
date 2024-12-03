@@ -10,19 +10,14 @@ import config from "../config.js"
 const router = express.Router()
 export default router
 
-function getBase(req) {
-  const url = new URL(`${req.protocol}://${req.get("host")}${req.originalUrl}`)
-  let base = `${url.origin}${url.pathname}`
-  if (!base.endsWith("/")) {
-    base += "/"
-  }
-  return base
+function getPathForId(id) {
+  return `${config.baseUrl}enrichment/${id}`
 }
 
 router.post("/", auth.main, (req, res) => {
   // Create hash of PICA patch content as id
   const id = createHash("sha1").update(req.body).digest("hex")
-  const uri = `${getBase(req)}${id}`
+  const uri = getPathForId(id)
   res.set("Location", uri)
   try {
     fs.writeFileSync(path.join(config.enrichmentsPath, id), req.body)
@@ -39,12 +34,12 @@ router.post("/", auth.main, (req, res) => {
 })
 
 router.get("/", (req, res) => {
-  let base = getBase(req), enrichments = ""
+  let enrichments = ""
   for (const id of fs.readdirSync(config.enrichmentsPath)) {
     const stats = fs.lstatSync(path.join(config.enrichmentsPath, id))
     // Make sure it is a file
     if (stats.isFile()) {
-      enrichments += `${base}${id} ${stats.birthtime.toISOString()}\n`
+      enrichments += `${getPathForId(id)} ${stats.birthtime.toISOString()}\n`
     }
   }
   res.type("txt").send(enrichments)

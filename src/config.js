@@ -1,4 +1,5 @@
 import * as dotenv from "dotenv"
+import assert from "node:assert"
 
 const logger = type => (msg => console[type](new Date().toISOString(), msg))
 const log = logger("log")
@@ -7,6 +8,7 @@ const NODE_ENV = process.env.NODE_ENV || "development"
 if (NODE_ENV !== "test") {
   dotenv.config()
 }
+const isProduction = NODE_ENV === "production"
 
 const { env } = process
 
@@ -29,11 +31,26 @@ try {
   process.exit(1)
 }
 
+const port = parseInt(env.PORT) || 3454
+let baseUrl
+try {
+  baseUrl = new URL(env.BASE_URL)
+  assert(baseUrl.protocol.match(/^https?:/))
+  if (!baseUrl.href.endsWith("/")) {
+    baseUrl = new URL(env.BASE_URL + "/")
+  }
+} catch (error) {
+  baseUrl = new URL(`http://localhost:${port}/`)
+  ;(isProduction || env.BASE_URL) && logger("warn")(`Warning: BASE_URL not provided or not valid. Using ${baseUrl} instead.`)
+}
+
 export default {
   env: NODE_ENV,
-  isProduction: NODE_ENV === "production",
-  base: env.BASE || "/",
-  port: parseInt(env.PORT) || 3454,
+  isProduction,
+  // Infer base for Vite from baseUrl
+  base: baseUrl.pathname,
+  baseUrl,
+  port,
   login,
   allowedUsers: (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim()),
   enrichmentsPath,
