@@ -2,7 +2,6 @@ import express from "express"
 import ViteExpress from "vite-express"
 import path from "node:path"
 
-import * as errors from "./errors.js"
 import config from "../config.js"
 import enrichmentRouter from "./enrichment-router.js"
 
@@ -21,25 +20,20 @@ app.use(enrichmentServerPath, enrichmentRouter)
 
 
 // Error handling
-app.use((error, req, res, next) => {
-  // Check if error is defined in errors
-  if (Object.values(errors).includes(error.constructor)) {
-    // Return message as language map prefLabel if possible
-    let prefLabel = error.prefLabel, message = error.message
-    if (typeof prefLabel !== "object" || !prefLabel) {
-      prefLabel = { "-": prefLabel || "" }
-    } else {
-      message = jskos.prefLabel({ prefLabel })
-    }
-    res.status(error.statusCode).send({
-      error: error.constructor.name,
-      status: error.statusCode,
-      message,
-      prefLabel,
-    })
+app.use((error, req, res, _next) => {
+  // Return message as language map prefLabel if possible
+  let prefLabel = error.prefLabel, message = error.message, status = error.statusCode || 500
+  if (typeof prefLabel !== "object" || !prefLabel) {
+    prefLabel = { "-": prefLabel || message || "" }
   } else {
-    next(error)
+    message = jskos.prefLabel({ prefLabel })
   }
+  res.status(status).send({
+    error: error.constructor.name,
+    status,
+    message,
+    prefLabel,
+  })
 })
 
 ViteExpress.listen(app, config.port, () => {
