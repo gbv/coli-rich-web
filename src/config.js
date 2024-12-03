@@ -15,6 +15,20 @@ if (login && !login.endsWith("/")) {
   login += "/"
 }
 
+const enrichmentsPath = env.ENRICHMENTS_PATH || "./enrichments"
+
+// Create folder for enrichments path if necessary
+import fs from "node:fs"
+try {
+  if (!fs.existsSync(enrichmentsPath)) {
+    fs.mkdirSync(enrichmentsPath)
+  }
+} catch (err) {
+  console.error(`Error when trying to access/create enrichtments path ${enrichmentsPath}:`, err)
+  console.error(`Make sure ${enrichmentsPath} is writable and restart the application.`)
+  process.exit(1)
+}
+
 export default {
   env: NODE_ENV,
   isProduction: NODE_ENV === "production",
@@ -22,6 +36,7 @@ export default {
   port: parseInt(env.PORT) || 3454,
   login,
   allowedUsers: (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim()),
+  enrichmentsPath,
   // methods
   log,
   warn: logger("warn"),

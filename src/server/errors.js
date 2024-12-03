@@ -25,6 +25,32 @@ export class ForbiddenAccessError extends Error {
   }
 }
 
+export class EntityNotFoundError extends Error {
+  constructor(message, id) {
+    const prefLabel = message ? { en: message } : {
+      en: `The requested entity ${id} could not be found.`,
+      de: `Die abgefragte Entität ${id} konnte nicht gefunden werden.`,
+    }
+    message = message || prefLabel.en
+    super(message)
+    this.statusCode = 404
+    this.prefLabel = prefLabel
+  }
+}
+
+export class BackendError extends Error {
+  constructor(message) {
+    const prefLabel = message ? { en: message } : {
+      en: "There was an unknown error with the backend.",
+      de: "Es gab einen unbekannten Backend-Fehler.",
+    }
+    message = message || prefLabel.en
+    super(message)
+    this.statusCode = 500
+    this.prefLabel = prefLabel
+  }
+}
+
 export class NotImplementedError extends Error {
   constructor(message) {
     const prefLabel = message ? { en: message } : {

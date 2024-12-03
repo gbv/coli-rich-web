@@ -60,6 +60,8 @@ BASE=/
 VITE_LOGIN_SERVER=http://localhost:3004
 # Hardcoded list of allow user URIs that can perform enrichments in the backend
 VITE_ALLOWED_USERS=uri1,uri2
+# Local file path where submitted enrichments will be temporarily stored
+ENRICHMENTS_PATH=./enrichments
 ```
 
 ## To-Dos

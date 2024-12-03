@@ -2,9 +2,9 @@ import express from "express"
 import ViteExpress from "vite-express"
 import path from "node:path"
 
-import * as auth from "./auth.js"
 import * as errors from "./errors.js"
 import config from "../config.js"
+import enrichmentRouter from "./enrichment-router.js"
 
 import * as jskos from "jskos-tools"
 
@@ -16,12 +16,9 @@ import bodyParser from "body-parser"
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.text())
 
-// TODO: Authenticated test endpoint, replace with actual enrichment endpoint
-app.post(path.join(config.base, "/submit"), auth.main, (req) => {
-  // PICA data in req.body
-  config.log(req.body)
-  throw new errors.NotImplementedError()
-})
+const enrichmentServerPath = path.join(config.base, "/enrichment")
+app.use(enrichmentServerPath, enrichmentRouter)
+
 
 // Error handling
 app.use((error, req, res, next) => {

@@ -223,7 +223,7 @@ async function submitEnrichments(ppn, suggestions) {
   }
   // TODO: Improve error handling further.
   try {
-    const response = await fetch(baseUrl + "submit", options)
+    const response = await fetch(baseUrl + "enrichment", options)
     const data = await response.json()
     if (response.status === 201) {
       alert("Success")
