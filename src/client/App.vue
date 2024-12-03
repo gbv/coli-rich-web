@@ -13,12 +13,15 @@ const initPromise = useInit()
 
 import { useLogin } from "@/composables/login.js"
 const { loginConfigured } = useLogin()
-const { loggedIn, user, token } = inject("login-refs")
+const { loggedIn, user } = inject("login-refs")
 
-import { useGoToTop } from "./composables/go-to-top.js"
+import { useGoToTop } from "@/composables/go-to-top.js"
 const { showGoToTopButton, goToTop } = useGoToTop()
 
-import { version, name, baseUrl, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
+import { useSubmitEnrichments } from "@/composables/submit-enrichments.js"
+const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSubmit } = useSubmitEnrichments()
+
+import { version, name, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
 
 const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri))
 
@@ -69,7 +72,13 @@ const selectAllSuggestions = computed({
   },
 })
 
+watch(selectedSuggestions, () => {
+  resetSubmit()
+})
+
 watch(() => state.ppn, async (ppn) => {
+  resetSubmit()
+
   await initPromise
   console.log(`Load PPN ${ppn}`)
   console.time(`Load PPN ${ppn}`)
@@ -212,28 +221,6 @@ watch(() => state.ppn, async (ppn) => {
   console.timeEnd(`Load PPN ${ppn}`)
 })
 
-async function submitEnrichments(ppn, suggestions) {
-  const pica = suggestionsToPica({ ppn, suggestions })
-  const options = {
-    method: "post",
-    headers: token ? {
-      Authorization: `Bearer ${token.value}`,
-    } : {},
-    body: pica,
-  }
-  // TODO: Improve error handling further.
-  try {
-    const response = await fetch(baseUrl + "enrichment", options)
-    const data = await response.json()
-    if (response.status === 201) {
-      alert("Success")
-    } else {
-      alert(`${data.error}: ${jskos.prefLabel(data) || data.message}`)
-    }
-  } catch (error) {
-    alert(`${error.name}: ${error.message}`)
-  }
-}
 </script>
 
 <template>
@@ -400,10 +387,14 @@ async function submitEnrichments(ppn, suggestions) {
           <p v-if="hasBackendAccess">
             <button 
               class="button"
-              :disabled="selectedSuggestions.length === 0"
+              :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
               @click="submitEnrichments(state.ppn, selectedSuggestions)">
               {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
             </button>
+            <loading-indicator
+              v-if="submitLoading"
+              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
+            {{ successMessage || errorMessage || "" }}
           </p>
           <p v-else>
             Keine Berechtigung zur Eintragung vorhanden.
