@@ -77,9 +77,9 @@ watch(selectedSuggestions, () => {
 })
 
 const showTopSubmitButton = ref(false)
-watch(suggestions, () => {
+watch([suggestions, selectedSuggestions], () => {
   setTimeout(() => {
-    if (document.documentElement.scrollHeight / document.documentElement.clientHeight > 1.5) {
+    if (document.documentElement.scrollHeight / document.documentElement.clientHeight > 1.4) {
       showTopSubmitButton.value = true
     } else {
       showTopSubmitButton.value = false
