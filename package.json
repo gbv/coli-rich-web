@@ -23,28 +23,28 @@
   "dependencies": {
     "body-parser": "^1.20.3",
     "cocoda-sdk": "^3.4.12",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "gbv-login-client-vue": "^1.0.0",
-    "jskos-tools": "^1.0.42",
-    "jskos-vue": "^0.3.16",
+    "jskos-tools": "^1.0.43",
+    "jskos-vue": "^0.3.18",
     "passport": "^0.7.0",
     "passport-anonymous": "^1.0.1",
     "passport-jwt": "^4.0.1",
-    "vite-express": "^0.19.0",
+    "vite-express": "^0.20.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
-    "@iconify-json/mdi": "^1.2.0",
-    "@vitejs/plugin-vue": "^5.2.0",
+    "@iconify-json/mdi": "^1.2.1",
+    "@vitejs/plugin-vue": "^5.2.1",
     "@vue/compiler-sfc": "^3.5.13",
-    "dotenv": "^16.4.5",
-    "eslint": "~9.14",
-    "eslint-config-gbv": "~2.4",
+    "dotenv": "^16.4.7",
+    "eslint": "~9.16",
+    "eslint-config-gbv": "~2.6",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.10",
     "nodemon": "^3.1.7",
-    "unplugin-icons": "^0.20.1",
-    "unplugin-vue-components": "^0.27.4",
-    "vite": "^5.4.11"
+    "unplugin-icons": "^0.21.0",
+    "unplugin-vue-components": "^0.27.5",
+    "vite": "^6.0.3"
   }
 }
