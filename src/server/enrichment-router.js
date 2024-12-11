@@ -47,6 +47,10 @@ router.get("/", (req, res) => {
 
 router.get("/:id", (req, res) => {
   const id = req.params.id
+  // Only allow alphanumeric characters in id
+  if (!/^[a-z0-9]+$/gi.test(id)) {
+    throw new errors.EntityNotFoundError(null, id)
+  }
   try {
     const file = path.join(config.enrichmentsPath, id)
     const created = fs.lstatSync(file).birthtime
