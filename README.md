@@ -58,8 +58,11 @@ PORT=3454
 BASE_URL=https://coli-conc.gbv.de/coli-rich/app/
 # Login Server instance base URL
 VITE_LOGIN_SERVER=http://localhost:3004
-# Hardcoded list of allow user URIs that can perform enrichments in the backend
+# Hardcoded list of allowed user URIs that can perform enrichments in the backend
 VITE_ALLOWED_USERS=uri1,uri2
+# List of allowed provider IDs (works in addition to VITE_ALLOWED_USERS, i.e. if a user either has one of the 
+# specified URIs or has one of the specified providers linked, they can perform enrichments in the backend)
+VITE_ALLOWED_PROVIDERS=provider1,provider2
 # Local file path where submitted enrichments will be temporarily stored
 ENRICHMENTS_PATH=./enrichments
 ```

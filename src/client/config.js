@@ -39,5 +39,6 @@ export const loginServerUrl = loginServer && loginServer.replace(/https?:\/\//, 
 export const loginServerSsl = loginServer && loginServer.startsWith("https://")
 
 export const allowedUsers = (import.meta.env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())
+export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
 
 export const baseUrl = import.meta.env.BASE_URL || "/"

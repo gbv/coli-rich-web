@@ -21,9 +21,9 @@ const { showGoToTopButton, goToTop } = useGoToTop()
 import { useSubmitEnrichments } from "@/composables/submit-enrichments.js"
 const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSubmit } = useSubmitEnrichments()
 
-import { version, name, showWhenExistsKey, examples, allowedUsers } from "@/config.js"
+import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders } from "@/config.js"
 
-const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri))
+const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri) || allowedProviders.find(provider => user.value?.identities[provider]?.id))
 
 const ppninput = ref("")
 

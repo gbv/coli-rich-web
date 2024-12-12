@@ -53,6 +53,7 @@ export default {
   port,
   login,
   allowedUsers: (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim()),
+  allowedProviders: (env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim()),
   enrichmentsPath,
   // methods
   log,
