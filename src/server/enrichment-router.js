@@ -14,7 +14,8 @@ function getPathForId(id) {
   return `${config.baseUrl}enrichment/${id}`
 }
 
-router.post("/", auth.main, (req, res) => {
+const freeAccess = config.allowedProviders.length === 1 && config.allowedProviders[0] === "*" && config.allowedUsers.length === 1 && config.allowedUsers[0] === "*"
+router.post("/", freeAccess ? auth.optional : auth.main, (req, res) => {
   // Create hash of PICA patch content as id
   const id = createHash("sha1").update(req.body).digest("hex")
   const uri = getPathForId(id)

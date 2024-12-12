@@ -69,6 +69,13 @@ VITE_ADDITIONAL_TEXT=Hello World
 ENRICHMENTS_PATH=./enrichments
 ```
 
+There are special cases for allowed users/providers:
+
+- If `VITE_ALLOWED_USERS` is set to `*`, all logged in users have backend access.
+  - This should only be used if the configured Login Server is itself restrictive enough.
+- If `VITE_ALLOWED_USERS` and `VITE_ALLOWED_PROVIDERS` are both set to `*`, then a login is not necessary to access the backend.
+  - **This should only be used for demo purposes!**
+
 ## To-Dos
 - [ ] Code cleanup
   - [ ] Split App.vue into multiple components
