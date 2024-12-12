@@ -23,7 +23,8 @@ const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSub
 
 import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction, additionalText } from "@/config.js"
 
-const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri) || allowedProviders.find(provider => user.value?.identities[provider]?.id))
+import { isAuthorized } from "../lib/utils.js"
+const hasBackendAccess = computed(() => isAuthorized(user.value, { allowedUsers, allowedProviders }))
 
 const ppninput = ref("")
 

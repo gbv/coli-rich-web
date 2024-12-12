@@ -13,6 +13,7 @@ import passport from "passport"
 
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"
 import { Strategy as AnonymousStrategy } from "passport-anonymous"
+import { isAuthorized } from "../lib/utils.js"
 
 if (config.login) {
   setup()
@@ -82,7 +83,7 @@ const auth = [
   }, 
   authPreparation, 
   (req, res, next) => {
-    if (!config.allowedUsers.includes(req.user?.uri) && !config.allowedProviders.find(provider => req.user?.identities[provider]?.id)) {
+    if (!isAuthorized(req.user, config)) {
       next(new ForbiddenAccessError("Access forbidden. User is not on the allowed list."))
     } else {
       next()
