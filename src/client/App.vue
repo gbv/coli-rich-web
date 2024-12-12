@@ -21,7 +21,7 @@ const { showGoToTopButton, goToTop } = useGoToTop()
 import { useSubmitEnrichments } from "@/composables/submit-enrichments.js"
 const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSubmit } = useSubmitEnrichments()
 
-import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders } from "@/config.js"
+import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction } from "@/config.js"
 
 const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri) || allowedProviders.find(provider => user.value?.identities[provider]?.id))
 
@@ -303,9 +303,19 @@ watch(() => state.ppn, async (ppn) => {
       <div class="section">
         <h2>Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus</h2>
         <p>
-          Mit folgendem Formular können Titeldaten aus dem K10plus abgerufen werden, um diese mit Sacherschließungsdaten (auf Basis von coli-conc Mappings) anzureichern.
+          Hier können Titeldaten aus dem K10plus abgerufen werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter den Vorschlägen kein passendes Mapping finden, können Sie im
+          <a
+            href="https://coli-conc.gbv.de/cocoda/app/"
+            target="_blank">Mapping-Tool Cocoda</a>
+          ein neues Mapping für Ihr Konzept erstellen und dieses direkt (nach neuladen dieser Seite) zur Eintragung in der coli-rich-Webanwendung übernehmen
         </p>
-        <p>Dieses Tool ist in Entwicklung und nur zur Demonstration. Aktuell ist keine Eintragung in die PICA-Datenbank möglich.</p>
+        <p v-if="isProduction">
+          <!-- TODO: Adjust production text -->
+          Vorgemerkte Anreicherungen werden regelmäßig in den K10plus übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
+        </p>
+        <p v-else>
+          Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. Vorgemerkte Anreicherungen werden nicht in den K10plus übernommen.
+        </p>
         <p>
           Titel laden
           <input

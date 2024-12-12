@@ -42,3 +42,4 @@ export const allowedUsers = (import.meta.env.VITE_ALLOWED_USERS || "").split(","
 export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
 
 export const baseUrl = import.meta.env.BASE_URL || "/"
+export const isProduction = import.meta.env.MODE === "production"
