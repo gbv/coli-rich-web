@@ -21,7 +21,7 @@ const { showGoToTopButton, goToTop } = useGoToTop()
 import { useSubmitEnrichments } from "@/composables/submit-enrichments.js"
 const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSubmit } = useSubmitEnrichments()
 
-import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction } from "@/config.js"
+import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction, additionalText } from "@/config.js"
 
 const hasBackendAccess = computed(() => allowedUsers.includes(user.value?.uri) || allowedProviders.find(provider => user.value?.identities[provider]?.id))
 
@@ -309,7 +309,10 @@ watch(() => state.ppn, async (ppn) => {
             target="_blank">Mapping-Tool Cocoda</a>
           ein neues Mapping für Ihr Konzept erstellen und dieses direkt (nach neuladen dieser Seite) zur Eintragung in der coli-rich-Webanwendung übernehmen
         </p>
-        <p v-if="isProduction">
+        <div
+          v-if="additionalText"
+          v-html="additionalText" />
+        <p v-else-if="isProduction">
           <!-- TODO: Adjust production text -->
           Vorgemerkte Anreicherungen werden regelmäßig in den K10plus übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
         </p>

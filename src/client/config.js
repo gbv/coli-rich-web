@@ -43,3 +43,10 @@ export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").s
 
 export const baseUrl = import.meta.env.BASE_URL || "/"
 export const isProduction = import.meta.env.MODE === "production"
+
+let _additionalText = import.meta.env.VITE_ADDITIONAL_TEXT || null
+// If the additional text is not enclosed in a HTML tag, use <p></p>
+if (_additionalText && !_additionalText.startsWith("<")) {
+  _additionalText = `<p>${_additionalText}</p>`
+}
+export const additionalText = _additionalText

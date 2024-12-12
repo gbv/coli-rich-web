@@ -63,6 +63,8 @@ VITE_ALLOWED_USERS=uri1,uri2
 # List of allowed provider IDs (works in addition to VITE_ALLOWED_USERS, i.e. if a user either has one of the 
 # specified URIs or has one of the specified providers linked, they can perform enrichments in the backend)
 VITE_ALLOWED_PROVIDERS=provider1,provider2
+# Additional text (HTML) shown instead of prod/dev text
+VITE_ADDITIONAL_TEXT=Hello World
 # Local file path where submitted enrichments will be temporarily stored
 ENRICHMENTS_PATH=./enrichments
 ```
