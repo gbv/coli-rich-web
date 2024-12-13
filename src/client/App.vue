@@ -368,7 +368,7 @@ watch(() => state.ppn, async (ppn) => {
         <h2 v-if="state.ppn && state.loadingPhase >= 1">
           Titeldaten
         </h2>
-        <table v-if="state.ppn && state.loadingPhase > 1 && state.titleName">
+        <table v-if="state.ppn && state.loadingPhase > 1 && (state.titleName || state.subjects?.length)">
           <tbody>
             <tr>
               <th style="max-width: 30%;">
@@ -382,7 +382,7 @@ watch(() => state.ppn, async (ppn) => {
             </tr>
             <tr>
               <th>Titel</th>
-              <td>{{ state.titleName }}</td>
+              <td>{{ state.titleName || "?" }}</td>
             </tr>
             <tr>
               <th>Sacherschließung</th>
