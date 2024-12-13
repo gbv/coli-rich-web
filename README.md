@@ -15,6 +15,7 @@ Note: This is currently a preview with no capability to write back into the cata
 - [To-Dos](#to-dos)
 - [Maintainers](#maintainers)
 - [Contribute](#contribute)
+  - [Publish](#publish)
 - [License](#license)
 
 ## Install
@@ -92,12 +93,12 @@ There are special cases for allowed users/providers:
 ## Contribute
 PRs accepted.
 
-<!-- - Please use the `dev` branch as a basis. Changes from `dev` will be merged into `main` only for new releases.
+- Please use the `dev` branch as a basis. Changes from `dev` will be merged into `main` only for new releases.
 - Please run the tests before committing.
 - Please do not skip the pre-commit hook when committing your changes.
-- If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification. -->
+- If editing the README, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
-<!-- ### Publish
+### Publish
 **For maintainers only**
 
 Please work on the `dev` branch during development (or better yet, develop in a feature branch and merge into `dev` when ready).
@@ -110,7 +111,6 @@ npm run release:patch
 
 This will:
 - Check that we are on `dev`
-- Run tests and build to make sure everything works
 - Make sure `dev` is up-to-date
 - Run `npm version patch` (or "minor"/"major")
 - **Ask you to confirm the version**
@@ -119,8 +119,6 @@ This will:
 - Merge changes from `dev`
 - Push `main` with tags
 - Switch back to `dev`
-
-After running this, GitHub Actions will automatically create a new GitHub Release draft. Please edit and publish the release manually. -->
 
 ## License
 MIT © 2024 Verbundzentrale des GBV (VZG)
