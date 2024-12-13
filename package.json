@@ -1,6 +1,6 @@
 {
   "name": "coli-rich-web",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Web service for enriching subject indexing data on the basis of mappings.",
   "type": "module",
   "scripts": {
