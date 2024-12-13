@@ -1,6 +1,6 @@
 # coli-rich Web Interface
 
-<!-- [![Status](https://coli-conc-status.fly.dev/api/badge/29/status)](https://coli-conc-status.fly.dev/status/all) -->
+[![Status](https://coli-conc-status.fly.dev/api/badge/25/status)](https://coli-conc-status.fly.dev/status/all)
 [![License](https://img.shields.io/github/license/gbv/coli-rich-web.svg)](https://github.com/gbv/coli-rich-web/blob/main/LICENSE)
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
 
