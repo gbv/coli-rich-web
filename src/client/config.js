@@ -1,6 +1,7 @@
 // Vite supports JSON import without assertions
 import pkg from "#/package.json"
 const { name, version, description } = pkg
+const { env } = import.meta
 
 export {
   name,
@@ -29,18 +30,18 @@ export const concordanceRegistry = cdk.initializeRegistry({
   api: concordanceApi,
 })
 
-const loginServer = import.meta.env.VITE_LOGIN_SERVER || null
+const loginServer = env.VITE_LOGIN_SERVER || null
 export const loginServerUrl = loginServer && loginServer.replace(/https?:\/\//, "")
 export const loginServerSsl = loginServer && loginServer.startsWith("https://")
 
-export const allowedUsers = (import.meta.env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())
-export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
+export const allowedUsers = (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())
+export const allowedProviders = (env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
 
-export const baseUrl = import.meta.env.BASE_URL || "/"
-export const isProduction = import.meta.env.MODE === "production"
+export const baseUrl = env.BASE_URL || "/"
+export const isProduction = env.MODE === "production"
 
-export const dbKey = isProduction ? "opac-de-627" : "test-k10plus"
-export const examples = isProduction ? [ "389598534", "1830228498", "1646529499" ] : []
+export const dbKey = env.DBKEY || "opac-de-627"
+export const examples = (env.EXAMPLES || "").split(",")
 
 let _additionalText = import.meta.env.VITE_ADDITIONAL_TEXT || null
 // If the additional text is not enclosed in a HTML tag, use <p></p>

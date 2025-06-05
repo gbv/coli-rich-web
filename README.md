@@ -57,6 +57,8 @@ Configuration can be adjusted via a `.env` file. Variables prefixed with `VITE_`
 PORT=3454
 # Full base URL on which your app will be hosted
 BASE_URL=https://coli-conc.gbv.de/coli-rich/app/
+# Database key
+DBKEY=opac-de-627
 # Login Server instance base URL
 VITE_LOGIN_SERVER=http://localhost:3004
 # Hardcoded list of allowed user URIs that can perform enrichments in the backend
