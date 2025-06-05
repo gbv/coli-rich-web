@@ -58,7 +58,9 @@ PORT=3454
 # Full base URL on which your app will be hosted
 BASE_URL=https://coli-conc.gbv.de/coli-rich/app/
 # Database key
-DBKEY=opac-de-627
+VITE_DBKEY=opac-de-627
+# Example PPNs
+VITE_EXAMPLES=389598534,1830228498,1646529499
 # Login Server instance base URL
 VITE_LOGIN_SERVER=http://localhost:3004
 # Hardcoded list of allowed user URIs that can perform enrichments in the backend

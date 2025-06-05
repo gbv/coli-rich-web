@@ -39,8 +39,8 @@ export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").s
 export const baseUrl = import.meta.env.BASE_URL || "/"
 export const isProduction = import.meta.env.MODE === "production"
 
-export const dbKey = import.meta.env.DBKEY || "opac-de-627"
-export const examples = (import.meta.env.EXAMPLES || "").split(",").filter(ppn => ppn.match(/^[0-9]+[Xx]?$/))
+export const dbKey = import.meta.env.VITE_DBKEY || "opac-de-627"
+export const examples = (import.meta.env.VITE_EXAMPLES || "").split(",").filter(ppn => ppn.match(/^[0-9]+[Xx]?$/))
 
 let _additionalText = import.meta.env.VITE_ADDITIONAL_TEXT || null
 // If the additional text is not enclosed in a HTML tag, use <p></p>
