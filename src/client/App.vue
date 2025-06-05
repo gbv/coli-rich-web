@@ -315,10 +315,12 @@ watch(() => state.ppn, async (ppn) => {
           v-html="additionalText" />
         <p v-else-if="isProduction">
           <!-- TODO: Adjust production text -->
-          Vorgemerkte Anreicherungen werden regelmäßig in den K10plus übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
+          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> 
+          werden regelmäßig in den K10plus übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
         </p>
         <p v-else>
-          Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. Vorgemerkte Anreicherungen werden nicht in den K10plus übernommen.
+          Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. 
+          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in den K10plus übernommen.
         </p>
         <p>
           Titel laden
