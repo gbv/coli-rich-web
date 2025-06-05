@@ -1,7 +1,6 @@
 // Vite supports JSON import without assertions
 import pkg from "#/package.json"
 const { name, version, description } = pkg
-const { env } = import.meta
 
 export {
   name,
@@ -30,18 +29,18 @@ export const concordanceRegistry = cdk.initializeRegistry({
   api: concordanceApi,
 })
 
-const loginServer = env.VITE_LOGIN_SERVER || null
+const loginServer = import.meta.env.VITE_LOGIN_SERVER || null
 export const loginServerUrl = loginServer && loginServer.replace(/https?:\/\//, "")
 export const loginServerSsl = loginServer && loginServer.startsWith("https://")
 
-export const allowedUsers = (env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())
-export const allowedProviders = (env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
+export const allowedUsers = (import.meta.env.VITE_ALLOWED_USERS || "").split(",").filter(Boolean).map(uri => uri.trim())
+export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").split(",").filter(Boolean).map(uri => uri.trim())
 
-export const baseUrl = env.BASE_URL || "/"
-export const isProduction = env.MODE === "production"
+export const baseUrl = import.meta.env.BASE_URL || "/"
+export const isProduction = import.meta.env.MODE === "production"
 
-export const dbKey = env.DBKEY || "opac-de-627"
-export const examples = (env.EXAMPLES || "").split(",")
+export const dbKey = import.meta.env.DBKEY || "opac-de-627"
+export const examples = (import.meta.env.EXAMPLES || "").split(",").filter(ppn => ppn.match(/^[0-9]+[Xx]?$/))
 
 let _additionalText = import.meta.env.VITE_ADDITIONAL_TEXT || null
 // If the additional text is not enclosed in a HTML tag, use <p></p>
