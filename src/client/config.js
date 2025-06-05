@@ -14,11 +14,6 @@ export const concordanceApi = "https://coli-conc.gbv.de/api/"
 export const showWhenExistsKey = "___SHOW_WHEN_EXISTS___"
 export const schemesKey = "coli-rich-web_schemes"
 export const typesKey = "coli-rich-web_types"
-export const examples = [
-  "389598534",
-  "1830228498",
-  "1646529499",
-]
 
 import * as jskos from "jskos-tools"
 import { cdk, addAllProviders } from "cocoda-sdk"
@@ -43,6 +38,9 @@ export const allowedProviders = (import.meta.env.VITE_ALLOWED_PROVIDERS || "").s
 
 export const baseUrl = import.meta.env.BASE_URL || "/"
 export const isProduction = import.meta.env.MODE === "production"
+
+export const dbKey = isProduction ? "opac-de-627" : "test-k10plus"
+export const examples = isProduction ? [ "389598534", "1830228498", "1646529499" ] : []
 
 let _additionalText = import.meta.env.VITE_ADDITIONAL_TEXT || null
 // If the additional text is not enclosed in a HTML tag, use <p></p>

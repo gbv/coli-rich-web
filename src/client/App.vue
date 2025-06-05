@@ -21,7 +21,7 @@ const { showGoToTopButton, goToTop } = useGoToTop()
 import { useSubmitEnrichments } from "@/composables/submit-enrichments.js"
 const { submitEnrichments, successMessage, errorMessage, submitLoading, resetSubmit } = useSubmitEnrichments()
 
-import { version, name, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction, additionalText } from "@/config.js"
+import { version, name, dbKey, showWhenExistsKey, examples, allowedUsers, allowedProviders, isProduction, additionalText } from "@/config.js"
 
 import { isAuthorized } from "../lib/utils.js"
 const hasBackendAccess = computed(() => isAuthorized(user.value, { allowedUsers, allowedProviders }))
@@ -304,7 +304,7 @@ watch(() => state.ppn, async (ppn) => {
       <div class="section">
         <h2>Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus</h2>
         <p>
-          Hier können Titeldaten aus dem K10plus abgerufen werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter den Vorschlägen kein passendes Mapping finden, können Sie im
+          Hier können Titeldaten aus der <a href="https://uri.gbv.de/database/{{dbkey}}">Datenbank {{ dbKey }}</a> abgerufen werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter den Vorschlägen kein passendes Mapping finden, können Sie im
           <a
             href="https://coli-conc.gbv.de/cocoda/app/"
             target="_blank">Mapping-Tool Cocoda</a>
@@ -316,11 +316,11 @@ watch(() => state.ppn, async (ppn) => {
         <p v-else-if="isProduction">
           <!-- TODO: Adjust production text -->
           <a href="./enrichment/">Vorgemerkte Anreicherungen</a> 
-          werden regelmäßig in den K10plus übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
+          werden regelmäßig in die Datenbank übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
         </p>
         <p v-else>
           Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. 
-          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in den K10plus übernommen.
+          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in die Datenbank übernommen.
         </p>
         <p>
           Titel laden
@@ -336,19 +336,21 @@ watch(() => state.ppn, async (ppn) => {
             <i-mdi-clipboard-search /> Laden
           </button>
           <span v-if="!state.loading">
-            Beispiele:
-            <template
-              v-for="(ppn, index) in examples"
-              :key="ppn">
-              <a
-                href=""
-                @click.prevent="state.ppn = ppn">
-                {{ ppn }}
-              </a>
-              <template v-if="index < examples.length - 1">
-                ·
+            <span v-if="examples.lengh">
+              Beispiele:
+              <template
+                v-for="(ppn, index) in examples"
+                :key="ppn">
+                <a
+                  href=""
+                  @click.prevent="state.ppn = ppn">
+                  {{ ppn }}
+                </a>
+                <template v-if="index < examples.length - 1">
+                  ·
+                </template>
               </template>
-            </template>
+            </span>
           </span>
           <span v-else>
             <loading-indicator

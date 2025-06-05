@@ -1,4 +1,4 @@
-import { subjectsApi, concordanceRegistry } from "@/config.js"
+import { subjectsApi, dbKey, concordanceRegistry } from "@/config.js"
 import state from "@/state.js"
 import * as jskos from "jskos-tools"
 
@@ -61,11 +61,11 @@ export function suggestionsToPica({ suggestions, ppn }) {
 }
 
 export async function getTitleName(ppn) {
-  return (await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=opac-de-627&language=de`)).json())[1][0]
+  return (await (await fetch(`https://ws.gbv.de/suggest/csl2/?citationstyle=ieee&query=pica.ppn=${ppn}&database=${dbKey}&language=de`)).json())[1][0]
 }
 
 export async function getSubjects(ppn) {
-  let subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/opac-de-627:ppn:${ppn}&live=1`)).json()
+  let subjects = await (await fetch(`${subjectsApi}/subjects?record=http://uri.gbv.de/document/${dbKey}:ppn:${ppn}&live=1`)).json()
   // Filter duplicate subjects
   subjects = [...new Set(subjects.map(s => s.uri))].map(uri_ => subjects.find(({ uri }) => uri === uri_))
   // Add scheme data to subjects
