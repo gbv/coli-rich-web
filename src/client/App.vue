@@ -336,7 +336,7 @@ watch(() => state.ppn, async (ppn) => {
             <i-mdi-clipboard-search /> Laden
           </button>
           <span v-if="!state.loading">
-            <span v-if="examples.lengh">
+            <span v-if="examples.length">
               Beispiele:
               <template
                 v-for="(ppn, index) in examples"
