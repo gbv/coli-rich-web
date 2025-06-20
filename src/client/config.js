@@ -8,7 +8,7 @@ export {
   description,
 }
 
-export const subjectsApi = "https://coli-conc.gbv.de/subjects-k10plus"
+export const subjectsApi = import.meta.env.VITE_SUBJECTS_API || "https://coli-conc.gbv.de/subjects-k10plus"
 export const bartocApi = "https://bartoc.org/api/"
 export const concordanceApi = "https://coli-conc.gbv.de/api/"
 export const showWhenExistsKey = "___SHOW_WHEN_EXISTS___"

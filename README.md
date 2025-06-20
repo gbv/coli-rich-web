@@ -63,6 +63,8 @@ VITE_DBKEY=opac-de-627
 VITE_EXAMPLES=389598534,1830228498,1646529499
 # Login Server instance base URL
 VITE_LOGIN_SERVER=http://localhost:3004
+# Subjects API to query
+VITE_SUBJECTS_API=https://coli-conc.gbv.de/subjects-k10plus
 # Hardcoded list of allowed user URIs that can perform enrichments in the backend
 VITE_ALLOWED_USERS=uri1,uri2
 # List of allowed provider IDs (works in addition to VITE_ALLOWED_USERS, i.e. if a user either has one of the 
