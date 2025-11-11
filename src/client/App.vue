@@ -384,9 +384,9 @@ watch(() => state.ppn, async (ppn) => {
                   :href="'https://opac.k10plus.de/DB=2.299/PPNSET?PPN='+ state.ppn"><i-mdi-file /> {{ state.ppn }}</a>
               </td>
             </tr>
-            <tr>
+            <tr v-if="state.titleName">
               <th>Titel</th>
-              <td>{{ state.titleName || "?" }}</td>
+              <td>{{ state.titleName }}</td>
             </tr>
             <tr>
               <th>Sacherschließung</th>
