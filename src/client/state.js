@@ -11,4 +11,5 @@ export default reactive({
   suggestions: [],
   suggestionSchemes: {},
   suggestionTypes: {},
+  suggestionSourceSchemes: {},
 })

@@ -31,13 +31,52 @@ const ppninput = ref("")
 import state from "@/state.js"
 
 const vocabularyFilterShown = ref(false)
+const sourceFilterShown = ref(false)
 const typeFilterShown = ref(false)
 
 const filterSuggestionsForShowWhenExists = (suggestion) => !state.subjects.find(({ scheme, subjects }) => jskos.compare(suggestion.scheme, scheme) && subjects.length > 0)
 
-const suggestions = computed(() => state.suggestions.filter(
-  suggestion => state.suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]]).length && (state.suggestionSchemes[showWhenExistsKey] || filterSuggestionsForShowWhenExists(suggestion)),
-).sort(sortSuggestionMappings))
+
+
+// All visible suggestions, filtered by:
+// - target vocabulary (Zielvokabular)
+// - mapping type
+// - source vocabulary (Quellvokabular)
+// - "show when exists" flag
+const suggestions = computed(() => state.suggestions.filter(suggestion => {
+
+  // Target vocabulary (scheme of the *suggested* concept)
+  // Use `!== false` so `undefined` is treated as "allowed" by default.
+  const hasAllowedTargetScheme = state.suggestionSchemes[suggestion.scheme.uri]
+
+  // Mapping types
+  // Keep the suggestion if *at least one* mapping uses an enabled type.
+  const hasAllowedType = suggestion.mappings.some(mapping =>
+    state.suggestionTypes[mapping.type[0]],
+  )
+
+  // Source vocabularies (fromScheme of mappings)
+  // Keep the suggestion if *at least one* mapping has an allowed source scheme.
+  const hasAllowedSourceScheme = suggestion.mappings.some(mapping => {
+    const uri = mapping.fromScheme?.uri
+    // If we don't have explicit info, treat as allowed
+    if (!uri || state.suggestionSourceSchemes[uri] === undefined) {
+      return true
+    }
+    return state.suggestionSourceSchemes[uri]
+  })
+
+  // If the global flag for this feature is ON, we don't filter here.
+  // If it's OFF, we only keep suggestions for schemes where the title
+  // has no existing subject indexing.
+  const showExists =
+    state.suggestionSchemes[showWhenExistsKey] ||
+    filterSuggestionsForShowWhenExists(suggestion)
+
+  // Suggestion is visible only if *all* conditions are satisfied.
+  return hasAllowedTargetScheme && hasAllowedType && hasAllowedSourceScheme && showExists
+}).sort(sortSuggestionMappings))
+
 
 const numberOfSuggestionsByScheme = computed(() => {
   const result = {}
@@ -50,6 +89,46 @@ const numberOfSuggestionsByType = computed(() => {
   const result = {}
   jskos.mappingTypes.forEach(type => {
     result[type.uri] = state.suggestions.filter(suggestion => suggestion.mappings.find(mapping => mapping.type[0] === type.uri)).length
+  })
+  return result
+})
+
+
+// All *source* vocabularies that actually appear as fromScheme in the current suggestions. 
+// Used to build the "Quellvokabulare filtern" list.
+const sourceSchemes = computed(() => {
+  // Map<uri, scheme> ensures uniqueness by URI
+  const map = new Map()
+  state.suggestions.forEach(suggestion => {
+    suggestion.mappings.forEach(mapping => {
+      const scheme = mapping.fromScheme
+      // Only keep schemes that have a URI and haven't been added yet
+      if (scheme && scheme.uri && !map.has(scheme.uri)) {
+        map.set(scheme.uri, scheme)
+      }
+    })
+  })
+  // Return plain array so template can `v-for` over it
+  return Array.from(map.values())
+})
+
+// a suggestion is only counted *once per scheme*,
+// even if it has multiple mappings from the same source vocabulary.
+const numberOfSuggestionsBySourceScheme = computed(() => {
+  const result = {}
+  state.suggestions.forEach(suggestion => {
+    // Collect all distinct source scheme URIs for this suggestion
+    const urisForSuggestion = new Set()
+    suggestion.mappings.forEach(mapping => {
+      const uri = mapping.fromScheme?.uri
+      if (uri) {
+        urisForSuggestion.add(uri)
+      }
+    })
+    // Count this suggestion once for each of its source schemes
+    urisForSuggestion.forEach(uri => {
+      result[uri] = (result[uri] || 0) + 1
+    })
   })
   return result
 })
@@ -441,9 +520,10 @@ watch(() => state.ppn, async (ppn) => {
                   type="checkbox">
               </th>
               <th style="white-space: nowrap;">
-                Vokabular
+                Zielvokabular
                 <a
                   href=""
+                  title="Zielvokabulare filtern"
                   @click.prevent="vocabularyFilterShown = true">
                   <i-mdi-filter-check
                     v-if="Object.values(state.suggestionSchemes).findIndex(value => value === false) === -1" />
@@ -453,11 +533,23 @@ watch(() => state.ppn, async (ppn) => {
               <th>Notation</th>
               <th style="min-width: 50%; white-space: nowrap;">
                 Quellen
+                <!-- Mapping-type filter -->
                 <a
                   href=""
+                  title="Mappingtypen filtern"
                   @click.prevent="typeFilterShown = true">
                   <i-mdi-filter-check
                     v-if="Object.values(state.suggestionTypes).findIndex(value => value === false) === -1" />
+                  <i-mdi-filter-minus v-else />
+                </a>
+                <!-- Source-vocabulary filter -->
+                <a
+                  href=""
+                  title="Quellvokabulare filtern"
+                  style="margin-left: 4px;"
+                  @click.prevent="sourceFilterShown = true">
+                  <i-mdi-filter-check
+                    v-if="Object.values(state.suggestionSourceSchemes).findIndex(value => value === false) === -1" />
                   <i-mdi-filter-minus v-else />
                 </a>
               </th>
@@ -480,7 +572,9 @@ watch(() => state.ppn, async (ppn) => {
                     v-for="mapping in mappings"
                     :key="mapping.uri"
                     :class="{
-                      faded: !state.suggestionTypes[mapping.type[0]],
+                      faded: !state.suggestionTypes[mapping.type[0]] ||
+                        (mapping.fromScheme?.uri &&
+                          state.suggestionSourceSchemes[mapping.fromScheme.uri] === false),
                     }">
                     {{ jskos.notation(mapping.fromScheme) }}
                     <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}</b>
@@ -505,7 +599,10 @@ watch(() => state.ppn, async (ppn) => {
             {{ state.suggestions.length }} Anreicherungen wurden herausgefiltert:
             <a
               href=""
-              @click.prevent="vocabularyFilterShown = true">Vokabular-Filter prüfen <i-mdi-filter /></a>
+              @click.prevent="sourceFilterShown = true">Quellvokabulare-Filter prüfen <i-mdi-filter /></a> ·
+            <a
+              href=""
+              @click.prevent="vocabularyFilterShown = true">Zielvokabulare-Filter prüfen <i-mdi-filter /></a>
             ·
             <a
               href=""
@@ -567,6 +664,71 @@ watch(() => state.ppn, async (ppn) => {
       </p>
     </footer>
   </div>
+  <!-- Source Vocabulary filter modal -->
+  <modal
+    v-model="sourceFilterShown"
+    style="--jskos-vue-modal-bgColor: #F5F3F3;">
+    <template #header>
+      <h1 style="padding: 0;">
+        Quellvokabulare filtern
+      </h1>
+    </template>
+    <div style="padding: 20px;">
+      Zeige Anreicherungen basierend auf folgenden Quellvokabularen:
+      <ul class="plainList">
+        <li>
+          <!-- Bulk enable/disable all source schemes that are actually present -->
+          <a
+            href=""
+            @click.prevent="sourceSchemes.forEach(({ uri }) => {
+              state.suggestionSourceSchemes[uri] = true
+            })">
+            alle aktivieren
+          </a>
+          ·
+          <a
+            href=""
+            @click.prevent="sourceSchemes.forEach(({ uri }) => {
+              state.suggestionSourceSchemes[uri] = false
+            })">
+            alle deaktivieren
+          </a>
+        </li>
+        <li
+          v-for="scheme in sourceSchemes.slice().sort((a, b) => {
+            // Sort by number of affected suggestions (desc)
+            const aSuggestions = numberOfSuggestionsBySourceScheme[a.uri] || 0
+            const bSuggestions = numberOfSuggestionsBySourceScheme[b.uri] || 0
+            if (aSuggestions > bSuggestions) return -1
+            if (aSuggestions < bSuggestions) return 1
+            return 0
+          })"
+          :key="scheme.uri"
+          style="user-select: none;"
+          :class="{
+            // Grey-out schemes that currently don't affect any suggestion
+            faded: (numberOfSuggestionsBySourceScheme[scheme.uri] || 0) === 0,
+          }">
+          <input
+            :id="`state.suggestionSourceSchemes-${scheme.uri}`"
+            v-model="state.suggestionSourceSchemes[scheme.uri]"
+            type="checkbox">
+          <label :for="`state.suggestionSourceSchemes-${scheme.uri}`">
+            {{ jskos.notation(scheme) }}
+            {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }}
+            ({{ numberOfSuggestionsBySourceScheme[scheme.uri] || 0 }})
+          </label>
+        </li>
+      </ul>
+      <p>
+        <small>
+          Anreicherungen werden ausgeblendet, wenn alle zugehörigen Mappings
+          aus deaktivierten Quellvokabularen stammen (linke Seite des Mappings).
+        </small>
+      </p>
+    </div>
+  </modal>
+
   <!-- Vokabulary filter modal -->
   <modal
     v-model="vocabularyFilterShown"
@@ -638,6 +800,7 @@ watch(() => state.ppn, async (ppn) => {
       </p>
     </div>
   </modal>
+
   <!-- Type filter modal -->
   <modal
     v-model="typeFilterShown"
