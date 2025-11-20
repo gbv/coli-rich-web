@@ -534,10 +534,10 @@ watch(() => state.ppn, async (ppn) => {
                   type="checkbox">
               </th>
               <th style="white-space: nowrap;">
-                Zielvokabular
+                Sacherschließung
                 <a
                   href=""
-                  title="Zielvokabulare filtern"
+                  title="Sacherschließung filtern"
                   @click.prevent="vocabularyFilterShown = true">
                   <i-mdi-filter-check
                     v-if="Object.values(state.suggestionSchemes).findIndex(value => value === false) === -1" />
@@ -546,7 +546,7 @@ watch(() => state.ppn, async (ppn) => {
               </th>
               <th>Notation</th>
               <th style="min-width: 50%; white-space: nowrap;">
-                Quellen
+                Mapping Vorschläge
                 <!-- Mapping-type filter -->
                 <a
                   href=""
@@ -616,11 +616,11 @@ watch(() => state.ppn, async (ppn) => {
               @click.prevent="sourceFilterShown = true">Quellvokabulare-Filter prüfen <i-mdi-filter /></a> ·
             <a
               href=""
-              @click.prevent="vocabularyFilterShown = true">Zielvokabulare-Filter prüfen <i-mdi-filter /></a>
+              @click.prevent="vocabularyFilterShown = true">Sacherschließung-Filter prüfen <i-mdi-filter /></a>
             ·
             <a
               href=""
-              @click.prevent="typeFilterShown = true">Mapping-Typ-Filter prüfen <i-mdi-filter /></a>
+              @click.prevent="typeFilterShown = true">Mapping Vorschläge-Filter prüfen <i-mdi-filter /></a>
           </template>
         </p>
         <p v-else-if="state.loadingPhase === 3">
@@ -749,7 +749,7 @@ watch(() => state.ppn, async (ppn) => {
     style="--jskos-vue-modal-bgColor: #F5F3F3;">
     <template #header>
       <h1 style="padding: 0;">
-        Zielvokabulare filtern
+        Sacherschließung filtern
       </h1>
     </template>
     <div style="padding: 20px;">
