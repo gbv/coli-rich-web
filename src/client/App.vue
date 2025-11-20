@@ -112,6 +112,20 @@ const sourceSchemes = computed(() => {
   return Array.from(map.values())
 })
 
+// Ensure that new source schemes default to "active" (true),
+// so the modal shows them as checked by default
+watch(
+  sourceSchemes,
+  (schemes) => {
+    schemes.forEach(({ uri }) => {
+      if (state.suggestionSourceSchemes[uri] === undefined) {
+        state.suggestionSourceSchemes[uri] = true
+      }
+    })
+  },
+  { immediate: true },
+)
+
 // a suggestion is only counted *once per scheme*,
 // even if it has multiple mappings from the same source vocabulary.
 const numberOfSuggestionsBySourceScheme = computed(() => {
