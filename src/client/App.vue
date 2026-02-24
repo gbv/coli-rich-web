@@ -58,8 +58,7 @@ const suggestions = computed(() => state.suggestions.filter(suggestion => {
   // Source vocabularies (fromScheme of mappings)
   // Keep the suggestion if *at least one* mapping has an allowed source scheme.
   const hasAllowedSourceScheme = suggestion.mappings.some(mapping => {
-    const uri = mapping.fromScheme?.uri
-    // If we don't have explicit info, treat as allowed
+    const uri = mapping._sourceScheme?.uri
     if (!uri || state.suggestionSourceSchemes[uri] === undefined) {
       return true
     }
@@ -76,6 +75,8 @@ const suggestions = computed(() => state.suggestions.filter(suggestion => {
   // Suggestion is visible only if *all* conditions are satisfied.
   return hasAllowedTargetScheme && hasAllowedType && hasAllowedSourceScheme && showExists
 }).sort(sortSuggestionMappings))
+
+console.log("All suggestions:", state.suggestions)
 
 
 const numberOfSuggestionsByScheme = computed(() => {
@@ -97,18 +98,15 @@ const numberOfSuggestionsByType = computed(() => {
 // All *source* vocabularies that actually appear as fromScheme in the current suggestions. 
 // Used to build the "Quellvokabulare filtern" list.
 const sourceSchemes = computed(() => {
-  // Map<uri, scheme> ensures uniqueness by URI
   const map = new Map()
   state.suggestions.forEach(suggestion => {
     suggestion.mappings.forEach(mapping => {
-      const scheme = mapping.fromScheme
-      // Only keep schemes that have a URI and haven't been added yet
-      if (scheme && scheme.uri && !map.has(scheme.uri)) {
+      const scheme = mapping._sourceScheme
+      if (scheme?.uri && !map.has(scheme.uri)) {
         map.set(scheme.uri, scheme)
       }
     })
   })
-  // Return plain array so template can `v-for` over it
   return Array.from(map.values())
 })
 
@@ -131,15 +129,13 @@ watch(
 const numberOfSuggestionsBySourceScheme = computed(() => {
   const result = {}
   state.suggestions.forEach(suggestion => {
-    // Collect all distinct source scheme URIs for this suggestion
     const urisForSuggestion = new Set()
     suggestion.mappings.forEach(mapping => {
-      const uri = mapping.fromScheme?.uri
+      const uri = mapping._sourceScheme?.uri
       if (uri) {
         urisForSuggestion.add(uri)
       }
     })
-    // Count this suggestion once for each of its source schemes
     urisForSuggestion.forEach(uri => {
       result[uri] = (result[uri] || 0) + 1
     })
@@ -266,6 +262,31 @@ watch(() => state.ppn, async (ppn) => {
       })
     })
   })
+
+  // Determine effective mapping direction for this title:
+  // source = side that matches title subjects, target = the other side
+  mappings.forEach(mapping => {
+    const fromConcept = jskos.conceptsOfMapping(mapping, "from")[0]
+    const toConcept = jskos.conceptsOfMapping(mapping, "to")[0]
+
+    const fromIsOnTitle = fromConcept && jskos.isContainedIn(fromConcept, subjects)
+    const toIsOnTitle = toConcept && jskos.isContainedIn(toConcept, subjects)
+
+    const sourceSide =
+    fromIsOnTitle && !toIsOnTitle ? "from"
+      : (!fromIsOnTitle && toIsOnTitle ? "to"
+        : "from") // fallback if ambiguous
+
+    const targetSide = sourceSide === "from" ? "to" : "from"
+
+    mapping._sourceSide = sourceSide
+    mapping._targetSide = targetSide
+    mapping._sourceScheme = mapping[`${sourceSide}Scheme`]
+    mapping._targetScheme = mapping[`${targetSide}Scheme`]
+    mapping._sourceConcept = jskos.conceptsOfMapping(mapping, sourceSide)[0]
+    mapping._targetConcept = jskos.conceptsOfMapping(mapping, targetSide)[0]
+  })
+
   state.mappings = mappings
   const suggestions = []
   for (const mapping of mappings) {
@@ -325,6 +346,17 @@ watch(() => state.ppn, async (ppn) => {
   state.loadingPhase = 10
   console.timeEnd(`Load PPN ${ppn}`)
 })
+
+const sourceSchemeNotations = (mappings = []) => {
+  const set = new Set()
+  mappings.forEach(m => {
+    const n = m?._sourceScheme ? jskos.notation(m._sourceScheme) : null
+    if (n) {
+      set.add(n)
+    }
+  })
+  return Array.from(set).join(", ")
+}
 
 </script>
 
@@ -534,17 +566,27 @@ watch(() => state.ppn, async (ppn) => {
                   type="checkbox">
               </th>
               <th style="white-space: nowrap;">
-                Sacherschließung
+                Quellvokabular
                 <a
                   href=""
-                  title="Sacherschließung filtern"
+                  title="Quellvokabulare filtern"
+                  @click.prevent="sourceFilterShown = true">
+                  <i-mdi-filter-check
+                    v-if="Object.values(state.suggestionSourceSchemes).findIndex(value => value === false) === -1" />
+                  <i-mdi-filter-minus v-else />
+                </a>
+              </th>
+              <th style="white-space: nowrap;">
+                Vorschlag (Notation)
+                <a
+                  href=""
+                  title="Vorschlagsvokabulare filtern"
                   @click.prevent="vocabularyFilterShown = true">
                   <i-mdi-filter-check
                     v-if="Object.values(state.suggestionSchemes).findIndex(value => value === false) === -1" />
                   <i-mdi-filter-minus v-else />
                 </a>
               </th>
-              <th>Notation</th>
               <th style="min-width: 50%; white-space: nowrap;">
                 Mapping Vorschläge
                 <!-- Mapping-type filter -->
@@ -554,16 +596,6 @@ watch(() => state.ppn, async (ppn) => {
                   @click.prevent="typeFilterShown = true">
                   <i-mdi-filter-check
                     v-if="Object.values(state.suggestionTypes).findIndex(value => value === false) === -1" />
-                  <i-mdi-filter-minus v-else />
-                </a>
-                <!-- Source-vocabulary filter -->
-                <a
-                  href=""
-                  title="Quellvokabulare filtern"
-                  style="margin-left: 4px;"
-                  @click.prevent="sourceFilterShown = true">
-                  <i-mdi-filter-check
-                    v-if="Object.values(state.suggestionSourceSchemes).findIndex(value => value === false) === -1" />
                   <i-mdi-filter-minus v-else />
                 </a>
               </th>
@@ -578,7 +610,7 @@ watch(() => state.ppn, async (ppn) => {
                   v-model="suggestions[index].selected"
                   type="checkbox">
               </td>
-              <td>{{ jskos.notation(target.inScheme[0]) }}</td>
+              <td>{{ sourceSchemeNotations(mappings) }}</td>
               <td><b>{{ jskos.notation(target) }}</b> {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
               <td>
                 <ul class="plainList">
@@ -587,17 +619,18 @@ watch(() => state.ppn, async (ppn) => {
                     :key="mapping.uri"
                     :class="{
                       faded: !state.suggestionTypes[mapping.type[0]] ||
-                        (mapping.fromScheme?.uri &&
-                          state.suggestionSourceSchemes[mapping.fromScheme.uri] === false),
+                        (mapping._sourceScheme?.uri &&
+                          state.suggestionSourceSchemes[mapping._sourceScheme.uri] === false),
                     }">
-                    {{ jskos.notation(mapping.fromScheme) }}
-                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}</b>
-                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
+                    {{ jskos.notation(mapping._sourceScheme) }}
+                    <b>{{ jskos.notation(mapping._sourceConcept) }}</b>
+                    {{ jskos.prefLabel(mapping._sourceConcept, { fallbackToUri: false }) }}
+
                     {{ jskos.notation(jskos.mappingTypeByUri(mapping.type[0])) }}
-                    {{ jskos.notation(mapping.toScheme) }}
-                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}</b>
-                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "to")[0], { fallbackToUri: false }) }}
-                    ({{ jskos.prefLabel(mapping.creator?.[0]) || "?" }}, {{ mapping.created?.slice(0, 4) || "?" }})
+
+                    {{ jskos.notation(mapping._targetScheme) }}
+                    <b>{{ jskos.notation(mapping._targetConcept) }}</b>
+                    {{ jskos.prefLabel(mapping._targetConcept, { fallbackToUri: false }) }}
                     <a
                       :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
                       target="_blank">Details</a>
