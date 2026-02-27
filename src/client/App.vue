@@ -609,7 +609,7 @@ const sourceSchemeNotations = (mappings = []) => {
                 </a>
               </th>
               <th style="min-width: 50%; white-space: nowrap;">
-                Mapping Vorschläge
+                Mapping Vorschlag
                 <!-- Mapping-type filter -->
                 <a
                   href=""
@@ -643,15 +643,9 @@ const sourceSchemeNotations = (mappings = []) => {
                         (mapping._sourceScheme?.uri &&
                           state.suggestionSourceSchemes[mapping._sourceScheme.uri] === false),
                     }">
-                    {{ jskos.notation(mapping._sourceScheme) }}
-                    <b>{{ jskos.notation(mapping._sourceConcept) }}</b>
-                    {{ jskos.prefLabel(mapping._sourceConcept, { fallbackToUri: false }) }}
-
-                    {{ jskos.notation(jskos.mappingTypeByUri(mapping.type[0])) }}
-
                     {{ jskos.notation(mapping._targetScheme) }}
                     <b>{{ jskos.notation(mapping._targetConcept) }}</b>
-                    {{ jskos.prefLabel(mapping._targetConcept, { fallbackToUri: false }) }}
+                    {{ jskos.prefLabel(target, { fallbackToUri: false }) }}
                     <a
                       :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
                       target="_blank">Details</a>
