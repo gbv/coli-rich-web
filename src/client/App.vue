@@ -238,6 +238,11 @@ watch(() => state.ppn, async (ppn) => {
   console.time("Load mappings")
   state.loadingPhase = 3
   const subjects = state.subjects.reduce((prev, cur) => prev.concat(cur.subjects), [])
+  const subjectPrefLabelByUri = new Map(
+    subjects
+      .filter(s => s?.uri && s?.prefLabel)
+      .map(s => [s.uri, s.prefLabel]),
+  )
   const mappings = await getMappingsForSubjects(subjects)
   // TODO: This needs to be fixed in the data!
   const mappingsWithoutType = mappings.filter(mapping => !mapping.type?.[0])
@@ -284,6 +289,22 @@ watch(() => state.ppn, async (ppn) => {
     mapping._sourceScheme = mapping[`${sourceSide}Scheme`]
     mapping._targetScheme = mapping[`${targetSide}Scheme`]
     mapping._sourceConcept = jskos.conceptsOfMapping(mapping, sourceSide)[0]
+    // copy prefLabel from title subjects if missing
+    if (mapping._sourceConcept) {
+      mapping._sourceConcept = {
+        ...mapping._sourceConcept,
+        inScheme: [mapping._sourceScheme],
+      }
+      if (!mapping._sourceConcept.prefLabel && subjectPrefLabelByUri.has(mapping._sourceConcept.uri)) {
+        mapping._sourceConcept.prefLabel = subjectPrefLabelByUri.get(mapping._sourceConcept.uri)
+      }
+    }
+    if (mapping._targetConcept) {
+      mapping._targetConcept = {
+        ...mapping._targetConcept,
+        inScheme: [mapping._targetScheme],
+      }
+    }
     mapping._targetConcept = jskos.conceptsOfMapping(mapping, targetSide)[0]
   })
 
@@ -577,7 +598,7 @@ const sourceSchemeNotations = (mappings = []) => {
                 </a>
               </th>
               <th style="white-space: nowrap;">
-                Vorschlag (Notation)
+                Quellnotation/Begriff
                 <a
                   href=""
                   title="Vorschlagsvokabulare filtern"
@@ -611,7 +632,7 @@ const sourceSchemeNotations = (mappings = []) => {
                   type="checkbox">
               </td>
               <td>{{ sourceSchemeNotations(mappings) }}</td>
-              <td><b>{{ jskos.notation(target) }}</b> {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
+              <td><b>{{ jskos.notation(mappings[0]._sourceConcept) }}</b> {{ jskos.prefLabel(mappings[0]._sourceConcept, { fallbackToUri: false }) }}</td>
               <td>
                 <ul class="plainList">
                   <li
