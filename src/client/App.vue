@@ -3,6 +3,8 @@ import { ref, watch, computed, inject } from "vue"
 import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "@/utils.js"
 
 import * as jskos from "jskos-tools"
+import vzg from "../assets/vzg.png"
+
 
 import { useUrlHandling } from "@/composables/url-handling.js"
 const { updateUrl } = useUrlHandling()
@@ -31,52 +33,13 @@ const ppninput = ref("")
 import state from "@/state.js"
 
 const vocabularyFilterShown = ref(false)
-const sourceFilterShown = ref(false)
 const typeFilterShown = ref(false)
 
 const filterSuggestionsForShowWhenExists = (suggestion) => !state.subjects.find(({ scheme, subjects }) => jskos.compare(suggestion.scheme, scheme) && subjects.length > 0)
 
-
-
-// All visible suggestions, filtered by:
-// - target vocabulary (Zielvokabular)
-// - mapping type
-// - source vocabulary (Quellvokabular)
-// - "show when exists" flag
-const suggestions = computed(() => state.suggestions.filter(suggestion => {
-
-  // Target vocabulary (scheme of the *suggested* concept)
-  // Use `!== false` so `undefined` is treated as "allowed" by default.
-  const hasAllowedTargetScheme = state.suggestionSchemes[suggestion.scheme.uri]
-
-  // Mapping types
-  // Keep the suggestion if *at least one* mapping uses an enabled type.
-  const hasAllowedType = suggestion.mappings.some(mapping =>
-    state.suggestionTypes[mapping.type[0]],
-  )
-
-  // Source vocabularies (fromScheme of mappings)
-  // Keep the suggestion if *at least one* mapping has an allowed source scheme.
-  const hasAllowedSourceScheme = suggestion.mappings.some(mapping => {
-    const uri = mapping.fromScheme?.uri
-    // If we don't have explicit info, treat as allowed
-    if (!uri || state.suggestionSourceSchemes[uri] === undefined) {
-      return true
-    }
-    return state.suggestionSourceSchemes[uri]
-  })
-
-  // If the global flag for this feature is ON, we don't filter here.
-  // If it's OFF, we only keep suggestions for schemes where the title
-  // has no existing subject indexing.
-  const showExists =
-    state.suggestionSchemes[showWhenExistsKey] ||
-    filterSuggestionsForShowWhenExists(suggestion)
-
-  // Suggestion is visible only if *all* conditions are satisfied.
-  return hasAllowedTargetScheme && hasAllowedType && hasAllowedSourceScheme && showExists
-}).sort(sortSuggestionMappings))
-
+const suggestions = computed(() => state.suggestions.filter(
+  suggestion => state.suggestionSchemes[suggestion.scheme.uri] && suggestion.mappings.filter(mapping => state.suggestionTypes[mapping.type[0]]).length && (state.suggestionSchemes[showWhenExistsKey] || filterSuggestionsForShowWhenExists(suggestion)),
+).sort(sortSuggestionMappings))
 
 const numberOfSuggestionsByScheme = computed(() => {
   const result = {}
@@ -89,60 +52,6 @@ const numberOfSuggestionsByType = computed(() => {
   const result = {}
   jskos.mappingTypes.forEach(type => {
     result[type.uri] = state.suggestions.filter(suggestion => suggestion.mappings.find(mapping => mapping.type[0] === type.uri)).length
-  })
-  return result
-})
-
-
-// All *source* vocabularies that actually appear as fromScheme in the current suggestions. 
-// Used to build the "Quellvokabulare filtern" list.
-const sourceSchemes = computed(() => {
-  // Map<uri, scheme> ensures uniqueness by URI
-  const map = new Map()
-  state.suggestions.forEach(suggestion => {
-    suggestion.mappings.forEach(mapping => {
-      const scheme = mapping.fromScheme
-      // Only keep schemes that have a URI and haven't been added yet
-      if (scheme && scheme.uri && !map.has(scheme.uri)) {
-        map.set(scheme.uri, scheme)
-      }
-    })
-  })
-  // Return plain array so template can `v-for` over it
-  return Array.from(map.values())
-})
-
-// Ensure that new source schemes default to "active" (true),
-// so the modal shows them as checked by default
-watch(
-  sourceSchemes,
-  (schemes) => {
-    schemes.forEach(({ uri }) => {
-      if (state.suggestionSourceSchemes[uri] === undefined) {
-        state.suggestionSourceSchemes[uri] = true
-      }
-    })
-  },
-  { immediate: true },
-)
-
-// a suggestion is only counted *once per scheme*,
-// even if it has multiple mappings from the same source vocabulary.
-const numberOfSuggestionsBySourceScheme = computed(() => {
-  const result = {}
-  state.suggestions.forEach(suggestion => {
-    // Collect all distinct source scheme URIs for this suggestion
-    const urisForSuggestion = new Set()
-    suggestion.mappings.forEach(mapping => {
-      const uri = mapping.fromScheme?.uri
-      if (uri) {
-        urisForSuggestion.add(uri)
-      }
-    })
-    // Count this suggestion once for each of its source schemes
-    urisForSuggestion.forEach(uri => {
-      result[uri] = (result[uri] || 0) + 1
-    })
   })
   return result
 })
@@ -320,7 +229,7 @@ watch(() => state.ppn, async (ppn) => {
     })
   }))
   console.timeEnd("Load concept data for mappings")
-  
+
   state.loading = false
   state.loadingPhase = 10
   console.timeEnd(`Load PPN ${ppn}`)
@@ -329,604 +238,551 @@ watch(() => state.ppn, async (ppn) => {
 </script>
 
 <template>
-  <div
-    v-if="showGoToTopButton"
-    class="goToTopButton">
-    <button 
-      class="button"
-      @click="goToTop">
-      nach oben <i-mdi-arrow-up-drop-circle />
-    </button>
-  </div>
-  <div>
-    <header class="header">
-      <a
-        href="https://coli-conc.gbv.de/"
-        class="coli-conc-logo-small">
-        <img
-          src="https://coli-conc.gbv.de/images/coli-conc.svg"
-          alt="coli-conc Logo">
-      </a>
-      <h1>
-        <a 
-          href=""
-          @click.prevent="state.ppn = null">
-          coli-rich
-        </a>
-      </h1>
-      <ul class="menu">
-        <li>
-          <a
-            href="https://coli-conc.gbv.de/"
-            title="Go to coli-conc website">
-            ⬅ zurück zur coli-conc Webseite
-          </a>
-        </li>
-        <li 
-          v-if="loginConfigured"
-          style="position: relative;">
-          <user-status>
-            <template
-              v-if="loggedIn"
-              #after>
-              <hr>
-              <p 
-                v-if="hasBackendAccess"
-                style="color: green;">
-                Schreibberechtigung ist vorhanden.
-              </p>
-              <p
-                v-else
-                style="color: red;">
-                Keine Schreibberechtigung.
-              </p>
-            </template>
-          </user-status>
-          <div 
-            v-if="!hasBackendAccess"
-            style="position: absolute; top: 0; right: 5px; z-index: 10000; color: red;">
-            ●
-          </div>
-        </li>
-      </ul>
-      <div style="clear:both" />
-    </header>
-    <main id="main">
-      <!-- Empty div here to start the alternating section colors -->
-      <div />
-      <div class="section">
-        <h2>Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus</h2>
-        <p>
-          Hier können Titeldaten aus der <a href="https://uri.gbv.de/database/{{dbkey}}">Datenbank {{ dbKey }}</a> abgerufen werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter den Vorschlägen kein passendes Mapping finden, können Sie im
-          <a
-            href="https://coli-conc.gbv.de/cocoda/app/"
-            target="_blank">Mapping-Tool Cocoda</a>
-          ein neues Mapping für Ihr Konzept erstellen und dieses direkt (nach neuladen dieser Seite) zur Eintragung in der coli-rich-Webanwendung übernehmen
-        </p>
-        <div
-          v-if="additionalText"
-          v-html="additionalText" />
-        <p v-else-if="isProduction">
-          <!-- TODO: Adjust production text -->
-          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> 
-          werden regelmäßig in die Datenbank übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies verzögern.
-        </p>
-        <p v-else>
-          Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. 
-          <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in die Datenbank übernommen.
-        </p>
-        <p>
-          Titel laden
-          <input
-            v-model="ppninput"
-            type="text"
-            placeholder="PPN"
-            @keyup.enter="!state.loading && (state.ppn = ppninput)">
-          <button 
-            class="button"
-            :disabled="state.loading || !ppninput"
-            @click="state.ppn = ppninput">
-            <i-mdi-clipboard-search /> Laden
-          </button>
-          <span v-if="!state.loading">
-            <span v-if="examples.length">
-              Beispiele:
-              <template
-                v-for="(ppn, index) in examples"
-                :key="ppn">
-                <a
-                  href=""
-                  @click.prevent="state.ppn = ppn">
-                  {{ ppn }}
-                </a>
-                <template v-if="index < examples.length - 1">
-                  ·
-                </template>
-              </template>
-            </span>
-          </span>
-          <span v-else>
-            <loading-indicator
-              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-            <span v-if="state.loadingPhase === 1">
-              Titeldaten werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 2">
-              Konzeptdaten für Sacherschließung werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 3">
-              Anreicherungsvorschläge auf Basis von Mappings werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 4">
-              Konzeptdaten für Anreicherungsvorschläge werden geladen...
-            </span>
-          </span>
-        </p>
-        <h2 v-if="state.ppn && state.loadingPhase >= 1">
-          Titeldaten
-        </h2>
-        <table v-if="state.ppn && state.loadingPhase > 1 && (state.titleName || state.subjects?.length)">
-          <tbody>
-            <tr>
-              <th style="max-width: 30%;">
-                PPN
-              </th>
-              <td>
-                <a
-                  target="_blank"
-                  :href="'https://opac.k10plus.de/DB=2.299/PPNSET?PPN='+ state.ppn"><i-mdi-file /> {{ state.ppn }}</a>
-              </td>
-            </tr>
-            <tr v-if="state.titleName">
-              <th>Titel</th>
-              <td>{{ state.titleName }}</td>
-            </tr>
-            <tr>
-              <th>Sacherschließung</th>
-              <td>
-                <ul class="plainList">
-                  <li
-                    v-for="{ scheme, subjects } in state.subjects"
-                    :key="scheme.uri">
-                    <b>{{ scheme.VOC.toUpperCase() }}:</b> {{ subjects.map(subject => `${jskos.notation(subject)} ${jskos.prefLabel(subject, { fallbackToUri: false })}`).join(", ") }}
-                  </li>
-                </ul>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else-if="state.error">
-          Fehler beim Laden von Titeldaten zu {{ state.ppn }}.
-        </p>
-        <p v-else-if="state.ppn && state.loadingPhase > 1 && !state.titleName">
-          Keine Titeldaten zu {{ state.ppn }} gefunden.
-        </p>
-        <p v-else-if="state.loadingPhase === 1">
-          <loading-indicator
-            style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-        </p>
-        <template v-if="showTopSubmitButton && state.ppn && state.loadingPhase > 3">
-          <p v-if="hasBackendAccess">
-            <button 
-              class="button"
-              :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
-              @click="submitEnrichments(state.ppn, selectedSuggestions)">
-              {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
-            </button>
-            <loading-indicator
-              v-if="submitLoading"
-              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-            {{ successMessage || errorMessage || "" }}
-          </p>
-          <p v-else>
-            Keine Berechtigung zur Eintragung vorhanden.
-          </p>
-        </template>
-        <h2 v-if="state.ppn && state.loadingPhase >= 3">
-          Mögliche Anreicherungen
-        </h2>
-        <table v-if="state.ppn && state.loadingPhase > 3 && suggestions.length">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  v-model="selectAllSuggestions"
-                  type="checkbox">
-              </th>
-              <th style="white-space: nowrap;">
-                Sacherschließung
-                <a
-                  href=""
-                  title="Sacherschließung filtern"
-                  @click.prevent="vocabularyFilterShown = true">
-                  <i-mdi-filter-check
-                    v-if="Object.values(state.suggestionSchemes).findIndex(value => value === false) === -1" />
-                  <i-mdi-filter-minus v-else />
-                </a>
-              </th>
-              <th>Notation</th>
-              <th style="min-width: 50%; white-space: nowrap;">
-                Mapping Vorschläge
-                <!-- Mapping-type filter -->
-                <a
-                  href=""
-                  title="Mappingtypen filtern"
-                  @click.prevent="typeFilterShown = true">
-                  <i-mdi-filter-check
-                    v-if="Object.values(state.suggestionTypes).findIndex(value => value === false) === -1" />
-                  <i-mdi-filter-minus v-else />
-                </a>
-                <!-- Source-vocabulary filter -->
-                <a
-                  href=""
-                  title="Quellvokabulare filtern"
-                  style="margin-left: 4px;"
-                  @click.prevent="sourceFilterShown = true">
-                  <i-mdi-filter-check
-                    v-if="Object.values(state.suggestionSourceSchemes).findIndex(value => value === false) === -1" />
-                  <i-mdi-filter-minus v-else />
-                </a>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="({ target, mappings }, index) in suggestions"
-              :key="target.uri">
-              <td>
-                <input
-                  v-model="suggestions[index].selected"
-                  type="checkbox">
-              </td>
-              <td>{{ jskos.notation(target.inScheme[0]) }}</td>
-              <td><b>{{ jskos.notation(target) }}</b> {{ jskos.prefLabel(target, { fallbackToUri: false }) }}</td>
-              <td>
-                <ul class="plainList">
-                  <li
-                    v-for="mapping in mappings"
-                    :key="mapping.uri"
-                    :class="{
-                      faded: !state.suggestionTypes[mapping.type[0]] ||
-                        (mapping.fromScheme?.uri &&
-                          state.suggestionSourceSchemes[mapping.fromScheme.uri] === false),
-                    }">
-                    {{ jskos.notation(mapping.fromScheme) }}
-                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "from")[0]) }}</b>
-                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "from")[0], { fallbackToUri: false }) }}
-                    {{ jskos.notation(jskos.mappingTypeByUri(mapping.type[0])) }}
-                    {{ jskos.notation(mapping.toScheme) }}
-                    <b>{{ jskos.notation(jskos.conceptsOfMapping(mapping, "to")[0]) }}</b>
-                    {{ jskos.prefLabel(jskos.conceptsOfMapping(mapping, "to")[0], { fallbackToUri: false }) }}
-                    ({{ jskos.prefLabel(mapping.creator?.[0]) || "?" }}, {{ mapping.created?.slice(0, 4) || "?" }})
-                    <a
-                      :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
-                      target="_blank">Details</a>
-                  </li>
-                </ul>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else-if="state.ppn && state.loadingPhase > 3 && suggestions.length === 0">
-          Keine Anreicherungen verfügbar.
-          <template v-if="state.suggestions.length">
-            {{ state.suggestions.length }} Anreicherungen wurden herausgefiltert:
-            <a
-              href=""
-              @click.prevent="sourceFilterShown = true">Quellvokabulare-Filter prüfen <i-mdi-filter /></a> ·
-            <a
-              href=""
-              @click.prevent="vocabularyFilterShown = true">Sacherschließung-Filter prüfen <i-mdi-filter /></a>
-            ·
-            <a
-              href=""
-              @click.prevent="typeFilterShown = true">Mapping Vorschläge-Filter prüfen <i-mdi-filter /></a>
-          </template>
-        </p>
-        <p v-else-if="state.loadingPhase === 3">
-          <loading-indicator
-            style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-        </p>
-        <div v-if="state.ppn && state.loadingPhase > 3">
-          <h2>Ausgewählte Anreicherungen in PICA</h2>
-          <!-- TODO: Code duplication for button and PICA data from above -->
-          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
-          <p v-if="hasBackendAccess">
-            <button 
-              class="button"
-              :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
-              @click="submitEnrichments(state.ppn, selectedSuggestions)">
-              {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
-            </button>
-            <loading-indicator
-              v-if="submitLoading"
-              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-            {{ successMessage || errorMessage || "" }}
-          </p>
-          <p v-else>
-            Keine Berechtigung zur Eintragung vorhanden.
-          </p>
+  <div class="appRoot">
+
+    <div v-if="showGoToTopButton" class="goToTopButton">
+      <button class="button" @click="goToTop">
+        nach oben <i-mdi-arrow-up-drop-circle />
+      </button>
+    </div>
+
+    <div class="pageWrapper">
+      <header class="header">
+        <div class="coli-conc-logo-small">
+          <img src="https://coli-conc.gbv.de/images/coli-conc.svg" alt="coli-conc Logo">
         </div>
-      </div>
-    </main>
-    <footer class="footer">
-      <p>
-        <b>{{ name }}</b> (Version {{ version }}) ist Teil des <a href="https://coli-conc.gbv.de/">coli-conc Projekts</a>. Der Quellcode und die technische Dokumentation werden über <a
-          href="https://github.com/gbv/coli-rich-web"
-          target="_blank">GitHub</a> bereitgestellt. Dieses Tool ist noch in der Entwicklungsphase.
-      </p>
-      <p>
-        <b>coli-conc</b> ist ein Projekt der <a
-          href="https://www.gbv.de/"
-          target="_blank">Verbundzentrale des GBV (VZG)</a>. Es wurde gefördert von der Deutschen Forschungsgemeinschaft (DFG) in
-        <a
-          href="https://gepris.dfg.de/gepris/projekt/276843344"
-          target="_blank">2015-2019</a>
-        und
-        <a
-          href="https://gepris.dfg.de/gepris/projekt/455051200"
-          target="_blank">2021-2023</a>.
-      </p>
-      <p>
-        <a
-          href="https://www.gbv.de/impressum"
-          target="_blank">Impressum</a> |
-        <a href="https://coli-conc.gbv.de/erklaerung-zur-barrierefreiheit/">Barrierefreiheit</a> |
-        <a
-          href="https://www.gbv.de/datenschutz"
-          target="_blank">Datenschutz</a>
-      </p>
-    </footer>
-  </div>
-  <!-- Source Vocabulary filter modal -->
-  <modal
-    v-model="sourceFilterShown"
-    style="--jskos-vue-modal-bgColor: #F5F3F3;">
-    <template #header>
-      <h1 style="padding: 0;">
-        Quellvokabulare filtern
-      </h1>
-    </template>
-    <div style="padding: 20px;">
-      Zeige Anreicherungen basierend auf folgenden Quellvokabularen:
-      <ul class="plainList">
-        <li>
-          <!-- Bulk enable/disable all source schemes that are actually present -->
-          <a
-            href=""
-            @click.prevent="sourceSchemes.forEach(({ uri }) => {
-              state.suggestionSourceSchemes[uri] = true
-            })">
-            alle aktivieren
-          </a>
-          ·
-          <a
-            href=""
-            @click.prevent="sourceSchemes.forEach(({ uri }) => {
-              state.suggestionSourceSchemes[uri] = false
-            })">
-            alle deaktivieren
-          </a>
-        </li>
-        <li
-          v-for="scheme in sourceSchemes.slice().sort((a, b) => {
-            // Sort by number of affected suggestions (desc)
-            const aSuggestions = numberOfSuggestionsBySourceScheme[a.uri] || 0
-            const bSuggestions = numberOfSuggestionsBySourceScheme[b.uri] || 0
+        <ul class="menu">
+          <li>
+            <a href="https://coli-conc.gbv.de/coli-rich/" title="Go to coli-rich website">
+              ⬅ zurück zur coli-rich Webseite
+            </a>
+          </li>
+
+          <li v-if="loginConfigured" style="position: relative;">
+            <user-status>
+              <template v-if="loggedIn" #after>
+                <hr>
+                <p v-if="hasBackendAccess" style="color: green;">
+                  Schreibberechtigung ist vorhanden.
+                </p>
+                <p v-else style="color: red;">
+                  Keine Schreibberechtigung.
+                </p>
+              </template>
+            </user-status>
+
+            <div v-if="!hasBackendAccess" style="position: absolute; top: 0; right: 5px; z-index: 10000; color: red;">
+              ●
+            </div>
+          </li>
+        </ul>
+        <div style="clear:both" />
+      </header>
+
+      <main id="main">
+        <!-- Empty div here to start the alternating section colors -->
+        <div />
+        <div>
+          <h1>coli-rich</h1>
+          <div class="service">
+            <span>Ein Service der</span>
+            <a href="https://en.gbv.de/informations/Verbundzentrale-en" target="_blank" rel="noopener">
+              <img :src="vzg" alt="VZG Logo" class="vzg-logo">
+            </a>
+          </div>
+          <p class="subtitle">Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus.</p>
+          <div class="section">
+            <p>
+              Hier können Titeldaten aus der <a href="https://uri.gbv.de/database/{{dbkey}}">Datenbank {{ dbKey }}</a>
+              abgerufen
+              werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter
+              den
+              Vorschlägen kein passendes Mapping finden, können Sie im
+              <a href="https://coli-conc.gbv.de/cocoda/app/" target="_blank">Mapping-Tool Cocoda</a>
+              ein neues Mapping für Ihr Konzept erstellen und dieses direkt (nach neuladen dieser Seite) zur Eintragung
+              in
+              der
+              coli-rich-Webanwendung übernehmen
+            </p>
+
+            <div v-if="additionalText" v-html="additionalText" />
+
+            <p v-else-if="isProduction">
+              <a href="./enrichment/">Vorgemerkte Anreicherungen</a>
+              werden regelmäßig in die Datenbank übernommen. Da dieses Tool noch in der Entwicklung ist, kann sich dies
+              verzögern.
+            </p>
+
+            <p v-else>
+              Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden.
+              <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in die Datenbank übernommen.
+            </p>
+          </div>
+        </div>
+
+        <div class="searchSection">
+          <div class="searchBar">
+            <h2 class="searchTitle">
+              Titeldaten anreichern
+            </h2>
+
+            <div class="searchControls">
+              <input v-model="ppninput" type="text" placeholder="PPN"
+                @keyup.enter="!state.loading && (state.ppn = ppninput)">
+
+              <button class="button" :disabled="state.loading || !ppninput" @click="state.ppn = ppninput">
+                <i-mdi-clipboard-search /> Laden
+              </button>
+            </div>
+          </div>
+
+          <div class="searchMeta">
+            <template v-if="!state.loading">
+              <span v-if="examples.length">
+                Beispiele:
+                <template v-for="(ppn, index) in examples" :key="ppn">
+                  <a href="" @click.prevent="state.ppn = ppn">
+                    {{ ppn }}
+                  </a>
+                  <template v-if="index < examples.length - 1">
+                    ·
+                  </template>
+                </template>
+              </span>
+            </template>
+
+            <template v-else>
+              <loading-indicator style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
+              <span v-if="state.loadingPhase === 1">
+                Titeldaten werden geladen...
+              </span>
+              <span v-if="state.loadingPhase === 2">
+                Konzeptdaten für Sacherschließung werden geladen...
+              </span>
+              <span v-if="state.loadingPhase === 3">
+                Anreicherungsvorschläge auf Basis von Mappings werden geladen...
+              </span>
+              <span v-if="state.loadingPhase === 4">
+                Konzeptdaten für Anreicherungsvorschläge werden geladen...
+              </span>
+            </template>
+          </div>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <p>
+          <b>{{ name }}</b> (Version {{ version }}) ist Teil des <a href="https://coli-conc.gbv.de/">coli-conc
+            Projekts</a>.
+          Der Quellcode und die technische Dokumentation werden über <a href="https://github.com/gbv/coli-rich-web"
+            target="_blank">GitHub</a> bereitgestellt. Dieses Tool ist noch in der Entwicklungsphase.
+        </p>
+        <p>
+          <b>coli-conc</b> ist ein Projekt der <a href="https://www.gbv.de/" target="_blank">Verbundzentrale des GBV
+            (VZG)</a>. Es wurde gefördert von der Deutschen Forschungsgemeinschaft (DFG) in
+          <a href="https://gepris.dfg.de/gepris/projekt/276843344" target="_blank">2015-2019</a>
+          und
+          <a href="https://gepris.dfg.de/gepris/projekt/455051200" target="_blank">2021-2023</a>.
+        </p>
+        <p>
+          <a href="https://www.gbv.de/impressum" target="_blank">Impressum</a> |
+          <a href="https://coli-conc.gbv.de/erklaerung-zur-barrierefreiheit/">Barrierefreiheit</a> |
+          <a href="https://www.gbv.de/datenschutz" target="_blank">Datenschutz</a>
+        </p>
+      </footer>
+    </div>
+
+    <modal v-model="vocabularyFilterShown" style="--jskos-vue-modal-bgColor: #F5F3F3;">
+      <template #header>
+        <h1 style="padding: 0;">
+          Zielvokabulare filtern
+        </h1>
+      </template>
+      <div style="padding: 20px;">
+        Zeige Anreicherungen aus den folgenden Vokabularen:
+        <ul class="plainList">
+          <li>
+            <a href="" @click.prevent="state.schemes.forEach(({ uri }) => { state.suggestionSchemes[uri] = true })">
+              alle aktivieren
+            </a>
+            ·
+            <a href="" @click.prevent="state.schemes.forEach(({ uri }) => { state.suggestionSchemes[uri] = false })">
+              alle deaktivieren
+            </a>
+          </li>
+          <li v-for="scheme in state.schemes.slice().sort((a, b) => {
+            const aSuggestions = numberOfSuggestionsByScheme[a.uri]
+            const bSuggestions = numberOfSuggestionsByScheme[b.uri]
             if (aSuggestions > bSuggestions) return -1
             if (aSuggestions < bSuggestions) return 1
             return 0
-          })"
-          :key="scheme.uri"
-          style="user-select: none;"
-          :class="{
-            // Grey-out schemes that currently don't affect any suggestion
-            faded: (numberOfSuggestionsBySourceScheme[scheme.uri] || 0) === 0,
-          }">
-          <input
-            :id="`state.suggestionSourceSchemes-${scheme.uri}`"
-            v-model="state.suggestionSourceSchemes[scheme.uri]"
-            type="checkbox">
-          <label :for="`state.suggestionSourceSchemes-${scheme.uri}`">
-            {{ jskos.notation(scheme) }}
-            {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }}
-            ({{ numberOfSuggestionsBySourceScheme[scheme.uri] || 0 }})
+          })" :key="scheme.uri" style="user-select: none;"
+            :class="{ faded: numberOfSuggestionsByScheme[scheme.uri] === 0 }">
+            <input :id="`state.suggestionSchemes-${scheme.uri}`" v-model="state.suggestionSchemes[scheme.uri]"
+              type="checkbox">
+            <label :for="`state.suggestionSchemes-${scheme.uri}`">
+              {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{
+                numberOfSuggestionsByScheme[scheme.uri] }})
+            </label>
+          </li>
+        </ul>
+        <p>
+          <input :id="`state.suggestionSchemes-${showWhenExistsKey}`"
+            v-model="state.suggestionSchemes[showWhenExistsKey]" type="checkbox">
+          <label :for="`state.suggestionSchemes-${showWhenExistsKey}`">
+            Zeige Anreicherungen für Vokabulare mit existierender Sacherschließung ({{
+              state.suggestions.filter(suggestion =>
+                !filterSuggestionsForShowWhenExists(suggestion)).length}})
           </label>
-        </li>
-      </ul>
-      <p>
-        <small>
-          Anreicherungen werden ausgeblendet, wenn alle zugehörigen Mappings
-          aus deaktivierten Quellvokabularen stammen (linke Seite des Mappings).
-        </small>
-      </p>
-    </div>
-  </modal>
+          <br>
+          <small>
+            Wenn deaktiviert werden Anreicherungsvorschläge von Vokabularen, zu denen schon Sacherschließung auf dem
+            Titel
+            existiert, ausgeblendet.
+          </small>
+        </p>
+      </div>
+    </modal>
 
-  <!-- Vokabulary filter modal -->
-  <modal
-    v-model="vocabularyFilterShown"
-    style="--jskos-vue-modal-bgColor: #F5F3F3;">
-    <template #header>
-      <h1 style="padding: 0;">
-        Sacherschließung filtern
-      </h1>
-    </template>
-    <div style="padding: 20px;">
-      Zeige Anreicherungen aus den folgenden Vokabularen:
-      <ul class="plainList">
-        <li>
-          <a
-            href=""
-            @click.prevent="state.schemes.forEach(({ uri }) => {
-              state.suggestionSchemes[uri] = true
-            })">
-            alle aktivieren
-          </a>
-          ·
-          <a
-            href=""
-            @click.prevent="state.schemes.forEach(({ uri }) => {
-              state.suggestionSchemes[uri] = false
-            })">
-            alle deaktivieren
-          </a>
-        </li>
-        <li 
-          v-for="scheme in state.schemes.slice().sort((a, b) => {
-            const aSuggestions = numberOfSuggestionsByScheme[a.uri]
-            const bSuggestions = numberOfSuggestionsByScheme[b.uri]
-            if (aSuggestions > bSuggestions) {
-              return -1
-            }
-            if (aSuggestions < bSuggestions) {
-              return 1
-            }
-            return 0
-          })"
-          :key="scheme.uri"
-          style="user-select: none;"
-          :class="{
-            faded: numberOfSuggestionsByScheme[scheme.uri] === 0,
-          }">
-          <input
-            :id="`state.suggestionSchemes-${scheme.uri}`"
-            v-model="state.suggestionSchemes[scheme.uri]"
-            type="checkbox">
-          <label
-            :for="`state.suggestionSchemes-${scheme.uri}`">
-            {{ jskos.notation(scheme) }} {{ jskos.prefLabel(scheme, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByScheme[scheme.uri] }})
-          </label>
-        </li>
-      </ul>
-      <p>
-        <input
-          :id="`state.suggestionSchemes-${showWhenExistsKey}`"
-          v-model="state.suggestionSchemes[showWhenExistsKey]"
-          type="checkbox">
-        <label :for="`state.suggestionSchemes-${showWhenExistsKey}`">
-          Zeige Anreicherungen für Vokabulare mit existierender Sacherschließung ({{ state.suggestions.filter(suggestion => !filterSuggestionsForShowWhenExists(suggestion)).length }})
-        </label>
-        <br>
-        <small>
-          Wenn deaktiviert werden Anreicherungsvorschläge von Vokabularen, zu denen schon Sacherschließung auf dem Titel existiert, ausgeblendet.
-        </small>
-      </p>
-    </div>
-  </modal>
+    <modal v-model="typeFilterShown" style="--jskos-vue-modal-bgColor: #F5F3F3;">
+      <template #header>
+        <h1 style="padding: 0;">
+          Mappingtypen filtern
+        </h1>
+      </template>
+      <div style="padding: 20px;">
+        Zeige Anreicherungen basierend auf folgenden Mappingtypen:
+      </div>
+    </modal>
 
-  <!-- Type filter modal -->
-  <modal
-    v-model="typeFilterShown"
-    style="--jskos-vue-modal-bgColor: #F5F3F3;">
-    <template #header>
-      <h1 style="padding: 0;">
-        Mappingtypen filtern
-      </h1>
-    </template>
-    <div style="padding: 20px;">
-      Zeige Anreicherungen basierend auf folgenden Mappingtypen:
-      <ul class="plainList">
-        <li>
-          <a
-            href=""
-            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
-              state.suggestionTypes[uri] = true
-            })">
-            alle aktivieren
-          </a>
-          ·
-          <a
-            href=""
-            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
-              state.suggestionTypes[uri] = false
-            })">
-            alle deaktivieren
-          </a>
-          ·
-          <a 
-            href=""
-            title="Mapping-Typen < und = sind geeignet für die automatische Anreicherung"
-            @click.prevent="jskos.mappingTypes.forEach(({ uri }) => {
-              state.suggestionTypes[uri] = (uri === 'http://www.w3.org/2004/02/skos/core#exactMatch' || uri === 'http://www.w3.org/2004/02/skos/core#narrowMatch') ? true : false
-            })">
-            nur ≤ aktivieren
-          </a>
-        </li>
-        <li 
-          v-for="type in jskos.mappingTypes.slice().sort((a, b) => {
-            const aSuggestions = numberOfSuggestionsByType[a.uri]
-            const bSuggestions = numberOfSuggestionsByType[b.uri]
-            if (aSuggestions > bSuggestions) {
-              return -1
-            }
-            if (aSuggestions < bSuggestions) {
-              return 1
-            }
-            return 0
-          })"
-          :key="type.uri"
-          style="user-select: none;"
-          :class="{
-            faded: numberOfSuggestionsByType[type.uri] === 0,
-          }">
-          <input
-            :id="`state.suggestionTypes-${type.uri}`"
-            v-model="state.suggestionTypes[type.uri]"
-            type="checkbox">
-          <label
-            :for="`state.suggestionTypes-${type.uri}`">
-            {{ jskos.notation(type) }} {{ jskos.prefLabel(type, { fallbackToUri: false }) }} ({{ numberOfSuggestionsByType[type.uri] }})
-          </label>
-        </li>
-      </ul>
-    </div>
-  </modal>
+  </div>
 </template>
 
 <style>
-header > h1 {
+.coli-conc-logo-small img {
+  height: 74px !important;
+  width: auto !important;
+  max-height: none !important;
+}
+
+.vzg-logo {
+  height: 35px;
+  width: auto;
+}
+
+.menu a {
+  font-size: 19px;
+}
+
+header>h1 {
   float: left;
   padding: 18px 0 0 20px;
-  font-size: 24px;
 }
+
 .plainList {
   list-style: none !important;
-  margin: 0; 
+  margin: 0;
   padding: 0;
 }
+
+.faded {
+  color: grey;
+}
+
 .button {
   margin: 0 10px;
   padding: 4px 20px;
 }
-/* TODO: This should probably be part of the base coli-conc.gbv.de style */
+
 .button:disabled {
   background-color: grey;
 }
+
 .button:disabled:hover {
   cursor: default;
 }
-.faded {
-  color: grey;
-}
-/* UserStatus style fixes */
+
 .user-status {
   z-index: 9999;
 }
-.user-status > a {
+
+.user-status>a {
   font-size: initial;
 }
+
 header .user-status li {
   float: none;
 }
+
 header .user-status li a {
   text-align: left;
 }
+
 .goToTopButton {
   position: fixed;
   bottom: 10px;
   right: -10px;
   font-size: 24px;
   z-index: 1;
+}
+
+h1 {
+  color: #b13f13;
+  font-size: 45px;
+  margin: 10px 0 12px 0;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.service {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.subtitle {
+  text-align: center;
+  font-size: 25px;
+  font-weight: 700;
+  margin-top: 60px;
+}
+
+.appRoot {
+  min-height: 100vh;
+}
+
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#main {
+  flex: 1;
+}
+
+.searchSection {
+  max-width: 900px;
+  width: calc(100% - 32px);
+  margin: 30px auto 120px auto;
+  padding: 0 46px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+}
+
+.searchSection>* {
+  width: 100%;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+
+.searchSection h2.searchTitle {
+  margin: 0;
+  font-size: 23px !important;
+  font-weight: 900;
+  color: #b13f13;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.searchControls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.searchControls input[type="text"] {
+  width: 420px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  border-radius: 7px;
+  outline: none;
+  font-size: 16px;
+}
+
+.searchControls input[type="text"]:focus {
+  box-shadow: 0 0 0 3px rgba(177, 63, 19, 0.15);
+}
+
+.searchSection .button {
+  margin: 0;
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #a6521b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.searchSection .button:hover {
+  filter: brightness(0.95);
+}
+
+.searchSection .button:disabled {
+  background: #b9b0ab;
+  cursor: not-allowed;
+}
+
+.searchMeta {
+  margin-top: 14px;
+  font-size: 15px;
+  color: #3a3a3a;
+}
+
+.searchSection a {
+  color: #b13f13;
+  text-decoration: none;
+}
+
+.searchSection a:hover {
+  text-decoration: underline;
+}
+
+.section {
+  margin: 50px 0 20px 0;
+  padding: 18.96px 190px;
+  font-size: 20px;
+}
+
+.footer {
+  background-color: #e9e1e1;
+  padding-top: 60px;
+}
+
+@media (max-width: 900px) {
+  .searchSection {
+    padding: 24px 20px;
+    min-height: 0;
+    display: block;
+  }
+
+  .searchBar {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .searchSection h2.searchTitle {
+    white-space: normal;
+    width: 100%;
+  }
+
+  .searchControls {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .searchControls input[type="text"] {
+    width: 100%;
+  }
+
+  .section {
+    padding: 18px 20px;
+  }
+
+  .coli-conc-logo-small img {
+    height: 64px !important;
+  }
+
+  header.header {
+    display: block !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 99999 !important;
+  }
+
+  header.header .coli-conc-logo-small {
+    float: none !important;
+    display: block !important;
+    padding: 10px 16px 0 16px;
+  }
+
+  header.header ul.menu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    float: none !important;
+    clear: both !important;
+    position: static !important;
+    transform: none !important;
+    clip: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 10px 0 0 0 !important;
+    padding: 0 16px !important;
+    list-style: none !important;
+  }
+
+  header.header ul.menu li {
+    float: none !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  header.header ul.menu a {
+    display: block !important;
+    width: 100% !important;
+    white-space: normal !important;
+    font-size: 16px !important;
+  }
+
+  .service {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+
+  .service a {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .service .vzg-logo {
+    display: inline-block !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .searchControls input[type="text"],
+  .searchSection .button {
+    width: 100%;
+  }
+
+  .coli-conc-logo-small img {
+    height: 54px !important;
+  }
 }
 </style>
