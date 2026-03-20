@@ -972,6 +972,7 @@ header > h1 {
 /* TODO: This should probably be part of the base coli-conc.gbv.de style */
 .button:disabled {
   background-color: grey;
+  color: #eee;
 }
 .button:disabled:hover {
   cursor: default;
