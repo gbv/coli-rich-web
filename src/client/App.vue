@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch, computed, inject } from "vue"
 import { getSubjects, getTitleName, sortSuggestionMappings, suggestionsToPica, getMappingsForSubjects, getConceptData } from "@/utils.js"
+import vzg from "../assets/vzg.png"
 
 import * as jskos from "jskos-tools"
 
@@ -394,24 +395,17 @@ const sourceSchemeNotations = (mappings = []) => {
   <div>
     <header class="header">
       <a
-        href="https://coli-conc.gbv.de/"
         class="coli-conc-logo-small">
         <img
           src="https://coli-conc.gbv.de/images/coli-conc.svg"
           alt="coli-conc Logo">
       </a>
-      <h1>
-        <a 
-          href=""
-          @click.prevent="state.ppn = null">
-          coli-rich
-        </a>
-      </h1>
       <ul class="menu">
         <li>
           <a
-            href="https://coli-conc.gbv.de/"
-            title="Go to coli-conc website">
+            href="https://coli-conc.gbv.de/coli-rich/"
+            title="Go to coli-conc website"
+            class="back-to-coli-conc">
             ⬅ zurück zur coli-conc Webseite
           </a>
         </li>
@@ -447,8 +441,25 @@ const sourceSchemeNotations = (mappings = []) => {
     <main id="main">
       <!-- Empty div here to start the alternating section colors -->
       <div />
+      <h1 class="main_title">
+        coli-rich
+      </h1>
+      <div class="service">
+        <span>Ein Service der</span>
+        <a
+          href="https://en.gbv.de/informations/Verbundzentrale-en"
+          target="_blank"
+          rel="noopener">
+          <img
+            :src="vzg"
+            alt="VZG Logo"
+            class="vzg-logo">
+        </a>
+      </div>
+      <p class="subtitle">
+        Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus.
+      </p>
       <div class="section">
-        <h2>Semi-automatische Eintragung von Sacherschließungsdaten in den K10plus</h2>
         <p>
           Hier können Titeldaten aus der <a href="https://uri.gbv.de/database/{{dbkey}}">Datenbank {{ dbKey }}</a> abgerufen werden, um diese mit Sacherschließungsdaten auf Basis von coli-conc-Mappings anzureichern. Falls Sie unter den Vorschlägen kein passendes Mapping finden, können Sie im
           <a
@@ -468,21 +479,30 @@ const sourceSchemeNotations = (mappings = []) => {
           Dies ist eine Entwicklungsinstanz und kann zur Demonstration verwendet werden. 
           <a href="./enrichment/">Vorgemerkte Anreicherungen</a> werden noch nicht in die Datenbank übernommen.
         </p>
-        <p>
-          Titel laden
-          <input
-            v-model="ppninput"
-            type="text"
-            placeholder="PPN"
-            @keyup.enter="!state.loading && (state.ppn = ppninput)">
-          <button 
-            class="button"
-            :disabled="state.loading || !ppninput"
-            @click="state.ppn = ppninput">
-            <i-mdi-clipboard-search /> Laden
-          </button>
-          <span v-if="!state.loading">
-            <span v-if="examples.length">
+
+        <div class="searchSection">
+          <div class="searchBar">
+            <h2 class="searchTitle">
+              Titeldaten anreichern
+            </h2>
+            <div class="searchControls">
+              <input
+                v-model="ppninput"
+                type="text"
+                placeholder="PPN"
+                @keyup.enter="!state.loading && (state.ppn = ppninput)">
+              <button 
+                class="button"
+                :disabled="state.loading || !ppninput"
+                @click="state.ppn = ppninput">
+                <i-mdi-clipboard-search /> Laden
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="loading-info">
+          <div v-if="!state.loading">
+            <div v-if="examples.length">
               Beispiele:
               <template
                 v-for="(ppn, index) in examples"
@@ -496,25 +516,27 @@ const sourceSchemeNotations = (mappings = []) => {
                   ·
                 </template>
               </template>
-            </span>
-          </span>
-          <span v-else>
+            </div>
+          </div>
+          <div
+            v-else>
             <loading-indicator
-              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-            <span v-if="state.loadingPhase === 1">
+              style="--jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
+            <div v-if="state.loadingPhase === 1">
               Titeldaten werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 2">
+            </div>
+            <div v-if="state.loadingPhase === 2">
               Konzeptdaten für Sacherschließung werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 3">
+            </div>
+            <div v-if="state.loadingPhase === 3">
               Anreicherungsvorschläge auf Basis von Mappings werden geladen...
-            </span>
-            <span v-if="state.loadingPhase === 4">
+            </div>
+            <div v-if="state.loadingPhase === 4">
               Konzeptdaten für Anreicherungsvorschläge werden geladen...
-            </span>
-          </span>
-        </p>
+            </div>
+          </div>
+        </div>
+
         <h2 v-if="state.ppn && state.loadingPhase >= 1">
           Titeldaten
         </h2>
@@ -976,5 +998,129 @@ header .user-status li a {
   right: -10px;
   font-size: 24px;
   z-index: 1;
+}
+.back-to-coli-conc {
+  font-size: 20px;
+}
+.service {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+.subtitle {
+  text-align: center;
+  font-size: 25px;
+  font-weight: 700;
+  margin-top: 60px;
+}
+.main_title {
+  color: #b13f13;
+  font-size: 45px;
+  margin: 10px 0 12px 0;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+}
+.vzg-logo {
+  height: 35px;
+  width: auto;
+}
+.section {
+  margin: 50px 0 20px 0;
+  padding: 18.96px 190px;
+  font-size: 20px;
+}
+.section:nth-child(2n+3) {
+  background-color: transparent;
+}
+.searchSection {
+  max-width: 900px;
+  width: calc(100% - 32px);
+  padding: 0 46px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  margin: 0 auto;
+}
+.searchSection>* {
+  width: 100%;
+}
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  width: 100%;
+  flex-wrap: nowrap;
+}
+.searchSection h2.searchTitle {
+  margin: 0;
+  font-size: 23px !important;
+  font-weight: 900;
+  color: #b13f13;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.searchControls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+
+.searchControls input[type="text"] {
+  width: 420px;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #111;
+  border-radius: 7px;
+  outline: none;
+  font-size: 16px;
+}
+
+.searchControls input[type="text"]:focus {
+  box-shadow: 0 0 0 3px rgba(177, 63, 19, 0.15);
+}
+
+.searchSection .button {
+  margin: 0;
+  height: 42px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #a6521b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.searchSection .button:hover {
+  filter: brightness(0.95);
+}
+
+.searchSection .button:disabled {
+  background: #b9b0ab;
+  cursor: not-allowed;
+}
+.loading-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.footer {
+  background-color: #e9e1e1;
+  padding-top: 60px;
 }
 </style>
