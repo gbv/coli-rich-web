@@ -369,16 +369,8 @@ watch(() => state.ppn, async (ppn) => {
   console.timeEnd(`Load PPN ${ppn}`)
 })
 
-const sourceSchemeNotations = (mappings = []) => {
-  const set = new Set()
-  mappings.forEach(m => {
-    const n = m?._sourceScheme ? jskos.notation(m._sourceScheme) : null
-    if (n) {
-      set.add(n)
-    }
-  })
-  return Array.from(set).join(", ")
-}
+const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] ||
+  (mapping._sourceScheme?.uri && state.suggestionSourceSchemes[mapping._sourceScheme.uri] === false)
 
 </script>
 
@@ -645,36 +637,36 @@ const sourceSchemeNotations = (mappings = []) => {
             </tr>
           </thead>
           <tbody>
-            <tr 
+            <template
               v-for="({ target, mappings }, index) in suggestions"
               :key="target.uri">
-              <td>
-                <input
-                  v-model="suggestions[index].selected"
-                  type="checkbox">
-              </td>
-              <td>{{ sourceSchemeNotations(mappings) }}</td>
-              <td><b>{{ jskos.notation(mappings[0]._sourceConcept) }}</b> {{ jskos.prefLabel(mappings[0]._sourceConcept, { fallbackToUri: false }) }}</td>
-              <td>
-                <ul class="plainList">
-                  <li
-                    v-for="mapping in mappings"
-                    :key="mapping.uri"
-                    :class="{
-                      faded: !state.suggestionTypes[mapping.type[0]] ||
-                        (mapping._sourceScheme?.uri &&
-                          state.suggestionSourceSchemes[mapping._sourceScheme.uri] === false),
-                    }">
-                    {{ jskos.notation(mapping._targetScheme) }}
-                    <b>{{ jskos.notation(mapping._targetConcept) }}</b>
-                    {{ jskos.prefLabel(target, { fallbackToUri: false }) }}
-                    <a
-                      :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
-                      target="_blank">Details</a>
-                  </li>
-                </ul>
-              </td>
-            </tr>
+              <tr
+                v-for="(mapping, mappingIndex) in mappings"
+                :key="mapping.uri || `${target.uri}-${mappingIndex}`">
+                <td
+                  v-if="mappingIndex === 0"
+                  :rowspan="mappings.length">
+                  <input
+                    v-model="suggestions[index].selected"
+                    type="checkbox">
+                </td>
+                <td :class="{ faded: isFilteredMapping(mapping) }">
+                  {{ jskos.notation(mapping._sourceScheme) }}
+                </td>
+                <td :class="{ faded: isFilteredMapping(mapping) }">
+                  <b>{{ jskos.notation(mapping._sourceConcept) }}</b>
+                  {{ jskos.prefLabel(mapping._sourceConcept, { fallbackToUri: false }) }}
+                </td>
+                <td :class="{ faded: isFilteredMapping(mapping) }">
+                  {{ jskos.notation(mapping._targetScheme) }}
+                  <b>{{ jskos.notation(mapping._targetConcept) }}</b>
+                  {{ jskos.prefLabel(target, { fallbackToUri: false }) }}
+                  <a
+                    :href="`https://coli-conc.gbv.de/data/?uri=${mapping.uri}`"
+                    target="_blank">Details</a>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
         <p v-else-if="state.ppn && state.loadingPhase > 3 && suggestions.length === 0">
