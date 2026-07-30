@@ -167,17 +167,6 @@ watch(selectedSuggestions, () => {
   resetSubmit()
 })
 
-const showTopSubmitButton = ref(false)
-watch([suggestions, selectedSuggestions], () => {
-  setTimeout(() => {
-    if (document.documentElement.scrollHeight / document.documentElement.clientHeight > 1.4) {
-      showTopSubmitButton.value = true
-    } else {
-      showTopSubmitButton.value = false
-    }
-  }, 100)
-})
-
 watch(() => state.ppn, async (ppn) => {
   resetSubmit()
 
@@ -572,23 +561,8 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
-        <template v-if="showTopSubmitButton && state.ppn && state.loadingPhase > 3 && hasBackendAccess">
-          <p>
-            <button 
-              class="button"
-              :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
-              @click="submitEnrichments(state.ppn, selectedSuggestions)">
-              {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
-            </button>
-            <loading-indicator
-              v-if="submitLoading"
-              style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
-            {{ successMessage || errorMessage || "" }}
-          </p>
-        </template>
         <div v-if="state.ppn && state.loadingPhase > 3">
           <h2>Ausgewählte Anreicherungen in PICA</h2>
-          <!-- TODO: Code duplication for button and PICA data from above -->
           <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
           <p v-if="hasBackendAccess">
             <button 
@@ -603,7 +577,7 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
             {{ successMessage || errorMessage || "" }}
           </p>
           <p v-else>
-            Keine Berechtigung zur Eintragung vorhanden.
+            <em>Keine Berechtigung zur Eintragung vorhanden!</em>
           </p>
         </div>
         <h2 v-if="state.ppn && state.loadingPhase >= 3">
