@@ -562,14 +562,13 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
         <div v-if="state.ppn && state.loadingPhase > 3">
-          <h2>Ausgewählte Anreicherungen in PICA</h2>
-          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
           <p v-if="hasBackendAccess">
             <button 
               class="button"
               :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
               @click="submitEnrichments(state.ppn, selectedSuggestions)">
-              {{ selectedSuggestions.length }} {{ selectedSuggestions.length === 1 ? "Vorschlag" : "Vorschläge" }} in Datenbank eintragen
+              {{ selectedSuggestions.length }} {{ selectedSuggestions.length > 1 ? "Anreicherungen" : "Anreicherung" }}
+              in Datenbank eintragen
             </button>
             <loading-indicator
               v-if="submitLoading"
@@ -579,6 +578,9 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
           <p v-else>
             <em>Keine Berechtigung zur Eintragung vorhanden!</em>
           </p>
+          <hr>
+          <h2>Ausgewählte Anreicherungen in PICA</h2>
+          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
         </div>
         <h2 v-if="state.ppn && state.loadingPhase >= 3">
           Mögliche Anreicherungen
