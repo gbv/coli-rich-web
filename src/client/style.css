@@ -161,3 +161,9 @@ thead tr th {
   margin-bottom: 2px;
   text-align: left;
 }
+/* Close tables with the same line below the last row.
+   Set on the table itself (not on the last row's cells) so it also spans
+   columns whose cells use rowspan. */
+table:has(thead) {
+  border-bottom: 2px solid #b13f13;
+}

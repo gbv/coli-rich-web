@@ -682,6 +682,11 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
           <loading-indicator
             style="margin-left: 10px; --jskos-vue-loadingIndicator-secondary-color: #B13F12;" />
         </p>
+        <!-- Repeat of the PICA output above, so it is also reachable below the table -->
+        <div v-if="state.ppn && state.loadingPhase > 3">
+          <h2>Ausgewählte Anreicherungen in PICA</h2>
+          <pre style="font-weight: 400; font-size: 14px; overflow-x: scroll;"><code>{{ selectedSuggestionsPica }}</code></pre>
+        </div>
       </div>
     </main>
     <footer class="footer">
