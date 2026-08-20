@@ -144,21 +144,28 @@ const numberOfSuggestionsBySourceScheme = computed(() => {
   return result
 })
 
-const selectedSuggestions = computed(() => suggestions.value.filter(({ selected }) => selected))
+// Selection happens per mapping. Suggestions are only kept as a grouping, so that
+// the PICA output knows which target concept a selected mapping belongs to.
+const selectedMappings = computed(() => suggestions.value.flatMap(({ mappings }) => mappings.filter(({ selected }) => selected)))
+const selectedSuggestions = computed(() => suggestions.value
+  .map(suggestion => ({ ...suggestion, mappings: suggestion.mappings.filter(({ selected }) => selected) }))
+  .filter(({ mappings }) => mappings.length))
 const selectedSuggestionsPica = computed(() => {
   return suggestionsToPica({ suggestions: selectedSuggestions.value, ppn: state.ppn })
 })
 
 const selectAllSuggestions = computed({
   get() {
-    if (!suggestions.value.find(({ selected }) => !selected)) {
+    if (!suggestions.value.find(({ mappings }) => mappings.find(({ selected }) => !selected))) {
       return true
     }
     return false
   },
   set(value) {
     state.suggestions.forEach(suggestion => {
-      suggestion.selected = value
+      suggestion.mappings.forEach(mapping => {
+        mapping.selected = value
+      })
     })
   },
 })
@@ -311,6 +318,7 @@ watch(() => state.ppn, async (ppn) => {
       ...target,
       inScheme: [targetScheme],
     }
+    mapping.selected = false
     const existingSuggestion = suggestions.find(s => jskos.compare(s.target, target))
     if (existingSuggestion) {
       existingSuggestion.mappings.push(mapping)
@@ -319,7 +327,6 @@ watch(() => state.ppn, async (ppn) => {
         target,
         scheme: targetScheme,
         mappings: [mapping],
-        selected: false,
       })
     }
   }
@@ -565,9 +572,9 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
           <p v-if="hasBackendAccess">
             <button 
               class="button"
-              :disabled="!!(selectedSuggestions.length === 0 || submitLoading || successMessage)"
+              :disabled="!!(selectedMappings.length === 0 || submitLoading || successMessage)"
               @click="submitEnrichments(state.ppn, selectedSuggestions)">
-              {{ selectedSuggestions.length }} {{ selectedSuggestions.length > 1 ? "Anreicherungen" : "Anreicherung" }}
+              {{ selectedMappings.length }} {{ selectedMappings.length > 1 ? "Anreicherungen" : "Anreicherung" }}
               in Datenbank eintragen
             </button>
             <loading-indicator
@@ -593,6 +600,8 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
                   v-model="selectAllSuggestions"
                   type="checkbox">
               </th>
+              <!-- Column for the brace grouping all mappings of one suggestion -->
+              <th class="groupBraceCell" />
               <th style="white-space: nowrap;">
                 Quellvokabular
                 <a
@@ -631,17 +640,23 @@ const isFilteredMapping = (mapping) => !state.suggestionTypes[mapping.type[0]] |
           </thead>
           <tbody>
             <template
-              v-for="({ target, mappings }, index) in suggestions"
+              v-for="{ target, mappings } in suggestions"
               :key="target.uri">
               <tr
                 v-for="(mapping, mappingIndex) in mappings"
                 :key="mapping.uri || `${target.uri}-${mappingIndex}`">
+                <td>
+                  <input
+                    v-model="mapping.selected"
+                    type="checkbox">
+                </td>
                 <td
                   v-if="mappingIndex === 0"
-                  :rowspan="mappings.length">
-                  <input
-                    v-model="suggestions[index].selected"
-                    type="checkbox">
+                  :rowspan="mappings.length"
+                  class="groupBraceCell">
+                  <div
+                    v-if="mappings.length > 1"
+                    class="groupBrace" />
                 </td>
                 <td :class="{ faded: isFilteredMapping(mapping) }">
                   {{ jskos.notation(mapping._sourceScheme) }}
@@ -949,6 +964,33 @@ header > h1 {
 }
 .faded {
   color: grey;
+}
+/* Brace that groups all mapping rows leading to the same suggested concept */
+.groupBraceCell {
+  position: relative;
+  width: 22px;
+  padding: 0;
+}
+.groupBrace {
+  box-sizing: border-box;
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 10px;
+  width: 8px;
+  border: 2px solid #b13f13;
+  border-right: 0;
+  border-radius: 5px 0 0 5px;
+}
+.groupBrace::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: 8px;
+  height: 2px;
+  margin-top: -1px;
+  background-color: #b13f13;
 }
 /* UserStatus style fixes */
 .user-status {

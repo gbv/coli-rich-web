@@ -50,13 +50,14 @@ export function sortSuggestionMappings(a, b) {
 
 export function suggestionsToPica({ suggestions, ppn }) {
   return `  003@ $0${ppn}\n` + suggestions.map(({ target, scheme, mappings }) => {
-    let pica = `+ ${scheme.PICA} `
-    pica += `$a${jskos.notation(target)}`
-    pica += "$Acoli-conc"
-    mappings.forEach(({ uri }) => {
+    // One line per mapping, even when several mappings lead to the same target concept
+    return mappings.map(({ uri }) => {
+      let pica = `+ ${scheme.PICA} `
+      pica += `$a${jskos.notation(target)}`
+      pica += "$Acoli-conc"
       pica += `$A${uri}`
-    })
-    return pica
+      return pica
+    }).join("\n")
   }).join("\n")
 }
 
